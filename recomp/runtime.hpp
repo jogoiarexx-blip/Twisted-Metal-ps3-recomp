@@ -75,3 +75,15 @@ void fn_009946c0(Cpu&,Memory&);
 void fn_009946e0(Cpu&,Memory&);
 void fn_00994838(Cpu&,Memory&);
 }
+namespace tmrecomp {
+uint64_t heap_start_0098c8c0(Cpu&,Memory&);
+uint64_t heap_helper_00988b78(Cpu&,Memory&);
+uint64_t heap_after_00988b78(Cpu&,Memory&);
+uint64_t heap_failed_return_0098c9f8(Cpu&,Memory&);
+}
+namespace tmrecomp {
+uint64_t heap_memset_0098769c(Cpu&,Memory&);
+uint64_t heap_after_0098769c(Cpu&,Memory&);
+uint64_t heap_list_heads_00988b0c(Cpu&,Memory&);
+uint64_t heap_after_00988b0c(Cpu&,Memory&);
+}
