@@ -1,3 +1,5 @@
+> **v0.15 publicada — inicialização do heap:** o boot probe validado com o EBOOT 1.06 agora avança até a chamada `0x988AA8`, mantendo essa chamada como pendência explícita. Código, verificadores e testes de heap estão no diretório [`recomp/`](recomp/). Veja [notas técnicas v0.15](EVOLUCAO-v0.15-HEAP-INIT.md). **Ainda não há jogo nativo jogável ou ganho de FPS comprovado.**
+
 > **v0.14 publicada — LV2 Memory HLE:** os arquivos de código C++ para alocação de memória guest, boot probe até `0x98C8C0`, testes e scripts de compilação foram sincronizados com a branch `main`. A validação de execução ocorreu localmente com o EBOOT 1.06 e **não equivale a um jogo jogável ou aumento comprovado de FPS**. Veja [evolução técnica](EVOLUCAO-v0.14-LV2-MEMORY.md) e [comandos de teste](recomp/README.md).
 
 > **v0.11:** novo [CROSSFEED-v0.11-SPURS.md](CROSSFEED-v0.11-SPURS.md), com dois NIDs SPURS de pós-FX ligados ao dispatcher e testes de memória big-endian. **Ainda não inicializa o jogo.**
