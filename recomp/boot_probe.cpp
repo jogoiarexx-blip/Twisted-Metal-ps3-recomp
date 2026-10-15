@@ -76,6 +76,24 @@ int main(int argc,char**argv) {
   next=startup_after_004ec908(cpu,mem);
   if (next!=0x98c8c0 || cpu.r[3]!=Lv2Memory::alloc_base || cpu.r[4]!=0xf00000 || cpu.lr!=0x4ec92c)
     throw std::runtime_error("Helper 0x98c8c0 call state mismatch");
+  std::cout<<"Heap allocation 0x"<<next<<" -> ";
+  next=heap_start_0098c8c0(cpu,mem);
+  if (next!=0x988b78 || cpu.lr!=0x98c8f4) throw std::runtime_error("Heap prologue mismatch");
+  std::cout<<"init helper 0x"<<next<<"\n";
+  next=heap_helper_00988b78(cpu,mem);
+  if (next!=0x98c8f4) throw std::runtime_error("Allocator init helper did not return");
+  next=heap_after_00988b78(cpu,mem);
+  if (next!=0x98769c || cpu.lr!=0x98c954)throw std::runtime_error("Heap size/alignment checks failed");
+  std::cout<<"Allocator descriptor initialized; memset at 0x"<<next<<"\n";
+  next=heap_memset_0098769c(cpu,mem);
+  if (next!=0x98c954)throw std::runtime_error("Guest memset returned unexpectedly");
+  next=heap_after_0098769c(cpu,mem);
+  if (next!=0x988b0c)throw std::runtime_error("Heap header initialization failed");
+  std::cout<<"Heap header ready; list-head helper at 0x"<<next<<"\n";
+  next=heap_list_heads_00988b0c(cpu,mem);
+  if (next!=0x98c990)throw std::runtime_error("List-head initialization failed");
+  next=heap_after_00988b0c(cpu,mem);
+  if (next!=0x988aa8 || cpu.lr!=0x98c9c8)throw std::runtime_error("Heap continuation mismatch");
   std::cout<<"NEXT: helper 0x"<<next<<" (NOT recompiled). No menu or gameplay yet.\n";
  }catch(const std::exception&e){std::cerr<<e.what()<<"\n";return 1;}
 }
