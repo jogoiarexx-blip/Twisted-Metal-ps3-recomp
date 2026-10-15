@@ -1,0 +1,41 @@
+name: Recomp C++ tests
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  unit-tests:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: recomp
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Build and run LV2 memory tests
+        run: |
+          g++ -std=c++17 -O2 -Wall -Wextra -Werror lv2_memory_test.cpp -o /tmp/lv2_memory_test
+          /tmp/lv2_memory_test
+
+      - name: Build and run startup4 tests
+        run: |
+          g++ -std=c++17 -O2 -Wall -Wextra -Werror startup4.cpp startup4_test.cpp -o /tmp/startup4_test
+          /tmp/startup4_test
+
+      - name: Build and run startup3 tests
+        run: |
+          g++ -std=c++17 -O2 -Wall -Wextra -Werror startup3.cpp startup3_test.cpp -o /tmp/startup3_test
+          /tmp/startup3_test
+
+      - name: Build and run SPURS tests
+        run: |
+          g++ -std=c++17 -O2 -Wall -Wextra -Werror spurs_hle_test.cpp -o /tmp/spurs_hle_test
+          /tmp/spurs_hle_test
+
+      - name: Compile boot harness
+        run: |
+          g++ -std=c++17 -O2 -Wall -Wextra -Werror entry.cpp startup2.cpp startup3.cpp startup4.cpp boot_probe.cpp -o /tmp/boot_probe
+          # Requires the user's own EBOOT.elf for execution; CI only compiles.
