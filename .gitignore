@@ -1,0 +1,35 @@
+# Python e caches
+__pycache__/
+*.py[cod]
+.pytest_cache/
+
+# Artefatos de compilação
+*.obj
+*.o
+*.exe
+*.dll
+*.pdb
+*.ilk
+*.lib
+*.a
+*.so
+*.dylib
+/build/
+/out/
+/CMakeFiles/
+CMakeCache.txt
+
+# Arquivos de jogo proprietários
+EBOOT.elf
+EBOOT.BIN
+*.self
+*.sprx
+*.psarc
+PS3_GAME/
+USRDIR/
+
+# Metadados locais
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
