@@ -1,3 +1,5 @@
+> **Atualização v0.14 (LV2 Memory HLE):** testes locais avançaram até `0x98C8C0`, com implementações parciais dos syscalls de memória `0x160` e `0x15C`. Veja [notas técnicas da v0.14](EVOLUCAO-v0.14-LV2-MEMORY.md). **O repositório ainda contém os fontes anteriores; a sincronização integral do código v0.14 está pendente. O port não é jogável.**
+
 > **v0.11:** novo [CROSSFEED-v0.11-SPURS.md](CROSSFEED-v0.11-SPURS.md), com dois NIDs SPURS de pós-FX ligados ao dispatcher e testes de memória big-endian. **Ainda não inicializa o jogo.**
 
 > **v0.9:** veja [EVOLUCAO-v0.9.md](EVOLUCAO-v0.9.md) para o novo bloco PPU, testes e limitações.
