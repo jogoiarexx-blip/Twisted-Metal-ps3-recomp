@@ -1,0 +1,3505 @@
+{
+  "source": "RPCS3.log for BCUS98106 01.06",
+  "count": 583,
+  "modules": 35,
+  "imports": [
+    {
+      "address": "0x00c873d4",
+      "nid": "0x6a98182e",
+      "module": "cellPrx_PsnEula",
+      "name": "0x6A98182E"
+    },
+    {
+      "address": "0x00c8740c",
+      "nid": "0xe26bb117",
+      "module": "cellPrx_PsnEula",
+      "name": "0xE26BB117"
+    },
+    {
+      "address": "0x00c87444",
+      "nid": "0x0d5f2c14",
+      "module": "sys_io",
+      "name": "cellPadClearBuf"
+    },
+    {
+      "address": "0x00c8747c",
+      "nid": "0x1cf98800",
+      "module": "sys_io",
+      "name": "cellPadInit"
+    },
+    {
+      "address": "0x00c874b4",
+      "nid": "0x2f1774d5",
+      "module": "sys_io",
+      "name": "cellKbGetInfo"
+    },
+    {
+      "address": "0x00c874ec",
+      "nid": "0x433f6ec0",
+      "module": "sys_io",
+      "name": "cellKbInit"
+    },
+    {
+      "address": "0x00c87524",
+      "nid": "0x4d9b75d5",
+      "module": "sys_io",
+      "name": "cellPadEnd"
+    },
+    {
+      "address": "0x00c8755c",
+      "nid": "0x578e3c98",
+      "module": "sys_io",
+      "name": "cellPadSetPortSetting"
+    },
+    {
+      "address": "0x00c87594",
+      "nid": "0x8b72cda1",
+      "module": "sys_io",
+      "name": "cellPadGetData"
+    },
+    {
+      "address": "0x00c875cc",
+      "nid": "0xa5f85e4d",
+      "module": "sys_io",
+      "name": "cellKbSetCodeType"
+    },
+    {
+      "address": "0x00c87604",
+      "nid": "0xa703a51d",
+      "module": "sys_io",
+      "name": "cellPadGetInfo2"
+    },
+    {
+      "address": "0x00c8763c",
+      "nid": "0xbfce3285",
+      "module": "sys_io",
+      "name": "cellKbEnd"
+    },
+    {
+      "address": "0x00c87674",
+      "nid": "0xf65544ee",
+      "module": "sys_io",
+      "name": "cellPadSetActDirect"
+    },
+    {
+      "address": "0x00c876ac",
+      "nid": "0xff0a21b7",
+      "module": "sys_io",
+      "name": "cellKbRead"
+    },
+    {
+      "address": "0x00c876e4",
+      "nid": "0xc7020f62",
+      "module": "cellSysutilAvconfExt",
+      "name": "cellVideoOutSetGamma"
+    },
+    {
+      "address": "0x00c8771c",
+      "nid": "0x051ee3ee",
+      "module": "sys_net",
+      "name": "socketpoll"
+    },
+    {
+      "address": "0x00c87754",
+      "nid": "0x139a9e9b",
+      "module": "sys_net",
+      "name": "sys_net_initialize_network_ex"
+    },
+    {
+      "address": "0x00c8778c",
+      "nid": "0x13efe7f5",
+      "module": "sys_net",
+      "name": "getsockname"
+    },
+    {
+      "address": "0x00c877c4",
+      "nid": "0x1f953b9f",
+      "module": "sys_net",
+      "name": "recvfrom"
+    },
+    {
+      "address": "0x00c877fc",
+      "nid": "0x28e208bb",
+      "module": "sys_net",
+      "name": "listen"
+    },
+    {
+      "address": "0x00c87834",
+      "nid": "0x3f09e20a",
+      "module": "sys_net",
+      "name": "socketselect"
+    },
+    {
+      "address": "0x00c8786c",
+      "nid": "0x5a045bd1",
+      "module": "sys_net",
+      "name": "getsockopt"
+    },
+    {
+      "address": "0x00c878a4",
+      "nid": "0x6005cde1",
+      "module": "sys_net",
+      "name": "_sys_net_errno_loc"
+    },
+    {
+      "address": "0x00c878dc",
+      "nid": "0x64f66d35",
+      "module": "sys_net",
+      "name": "connect"
+    },
+    {
+      "address": "0x00c87914",
+      "nid": "0x6db6e8cd",
+      "module": "sys_net",
+      "name": "socketclose"
+    },
+    {
+      "address": "0x00c8794c",
+      "nid": "0x71f4c717",
+      "module": "sys_net",
+      "name": "gethostbyname"
+    },
+    {
+      "address": "0x00c87984",
+      "nid": "0x88f03575",
+      "module": "sys_net",
+      "name": "setsockopt"
+    },
+    {
+      "address": "0x00c879bc",
+      "nid": "0x9647570b",
+      "module": "sys_net",
+      "name": "sendto"
+    },
+    {
+      "address": "0x00c879f4",
+      "nid": "0x9c056962",
+      "module": "sys_net",
+      "name": "socket"
+    },
+    {
+      "address": "0x00c87a2c",
+      "nid": "0xa50777c6",
+      "module": "sys_net",
+      "name": "shutdown"
+    },
+    {
+      "address": "0x00c87a64",
+      "nid": "0xa9a079e0",
+      "module": "sys_net",
+      "name": "inet_aton"
+    },
+    {
+      "address": "0x00c87a9c",
+      "nid": "0xb0a59804",
+      "module": "sys_net",
+      "name": "bind"
+    },
+    {
+      "address": "0x00c87ad4",
+      "nid": "0xb68d5625",
+      "module": "sys_net",
+      "name": "sys_net_finalize_network"
+    },
+    {
+      "address": "0x00c87b0c",
+      "nid": "0xc94f6939",
+      "module": "sys_net",
+      "name": "accept"
+    },
+    {
+      "address": "0x00c87b44",
+      "nid": "0xc98a3146",
+      "module": "sys_net",
+      "name": "inet_ntop"
+    },
+    {
+      "address": "0x00c87b7c",
+      "nid": "0xdc751b40",
+      "module": "sys_net",
+      "name": "send"
+    },
+    {
+      "address": "0x00c87bb4",
+      "nid": "0xfba04f37",
+      "module": "sys_net",
+      "name": "recv"
+    },
+    {
+      "address": "0x00c87bec",
+      "nid": "0x000e53cc",
+      "module": "sceNp",
+      "name": "sceNpManagerSubSignout"
+    },
+    {
+      "address": "0x00c87c24",
+      "nid": "0x01fbbc9b",
+      "module": "sceNp",
+      "name": "sceNpBasicSendMessageGui"
+    },
+    {
+      "address": "0x00c87c5c",
+      "nid": "0x0968aa36",
+      "module": "sceNp",
+      "name": "sceNpManagerGetTicket"
+    },
+    {
+      "address": "0x00c87c94",
+      "nid": "0x166dcc11",
+      "module": "sceNp",
+      "name": "sceNpLookupNpId"
+    },
+    {
+      "address": "0x00c87ccc",
+      "nid": "0x1ae8a549",
+      "module": "sceNp",
+      "name": "sceNpBasicAddBlockListEntry"
+    },
+    {
+      "address": "0x00c87d04",
+      "nid": "0x21206642",
+      "module": "sceNp",
+      "name": "sceNpScoreGetRankingByRangeAsync"
+    },
+    {
+      "address": "0x00c87d3c",
+      "nid": "0x259113b8",
+      "module": "sceNp",
+      "name": "sceNpScoreDestroyTitleCtx"
+    },
+    {
+      "address": "0x00c87d74",
+      "nid": "0x260caedd",
+      "module": "sceNp",
+      "name": "sceNpBasicGetFriendPresenceByNpId2"
+    },
+    {
+      "address": "0x00c87dac",
+      "nid": "0x32cf311f",
+      "module": "sceNp",
+      "name": "sceNpScoreInit"
+    },
+    {
+      "address": "0x00c87de4",
+      "nid": "0x3db7914d",
+      "module": "sceNp",
+      "name": "sceNpScoreGetRankingByNpIdAsync"
+    },
+    {
+      "address": "0x00c87e1c",
+      "nid": "0x3f0808aa",
+      "module": "sceNp",
+      "name": "sceNpBasicSetPresence"
+    },
+    {
+      "address": "0x00c87e54",
+      "nid": "0x4026eac5",
+      "module": "sceNp",
+      "name": "sceNpBasicRegisterContextSensitiveHandler"
+    },
+    {
+      "address": "0x00c87e8c",
+      "nid": "0x442381f7",
+      "module": "sceNp",
+      "name": "sceNpManagerSubSignin"
+    },
+    {
+      "address": "0x00c87ec4",
+      "nid": "0x4b9efb7a",
+      "module": "sceNp",
+      "name": "sceNpManagerGetCachedInfo"
+    },
+    {
+      "address": "0x00c87efc",
+      "nid": "0x52a6b523",
+      "module": "sceNp",
+      "name": "sceNpManagerUnregisterCallback"
+    },
+    {
+      "address": "0x00c87f34",
+      "nid": "0x58fa4fcd",
+      "module": "sceNp",
+      "name": "sceNpManagerGetTicketParam"
+    },
+    {
+      "address": "0x00c87f6c",
+      "nid": "0x5de61626",
+      "module": "sceNp",
+      "name": "sceNpLookupDestroyTitleCtx"
+    },
+    {
+      "address": "0x00c87fa4",
+      "nid": "0x5f2d9257",
+      "module": "sceNp",
+      "name": "sceNpLookupInit"
+    },
+    {
+      "address": "0x00c87fdc",
+      "nid": "0x6453b27b",
+      "module": "sceNp",
+      "name": "sceNpBasicGetFriendPresenceByIndex2"
+    },
+    {
+      "address": "0x00c88014",
+      "nid": "0x64a704cc",
+      "module": "sceNp",
+      "name": "sceNpBasicRecvMessageAttachmentLoad"
+    },
+    {
+      "address": "0x00c8804c",
+      "nid": "0x6f5e8143",
+      "module": "sceNp",
+      "name": "sceNpScoreCreateTransactionCtx"
+    },
+    {
+      "address": "0x00c88084",
+      "nid": "0x73931bd0",
+      "module": "sceNp",
+      "name": "sceNpBasicGetBlockListEntryCount"
+    },
+    {
+      "address": "0x00c880bc",
+      "nid": "0x7508112e",
+      "module": "sceNp",
+      "name": "sceNpLookupPollAsync"
+    },
+    {
+      "address": "0x00c880f4",
+      "nid": "0x8297f1ec",
+      "module": "sceNp",
+      "name": "sceNpManagerRequestTicket2"
+    },
+    {
+      "address": "0x00c8812c",
+      "nid": "0x8440537c",
+      "module": "sceNp",
+      "name": "sceNpLookupTerm"
+    },
+    {
+      "address": "0x00c88164",
+      "nid": "0x860b1756",
+      "module": "sceNp",
+      "name": "sceNpLookupTitleSmallStorageAsync"
+    },
+    {
+      "address": "0x00c8819c",
+      "nid": "0x9851f805",
+      "module": "sceNp",
+      "name": "sceNpScoreTerm"
+    },
+    {
+      "address": "0x00c881d4",
+      "nid": "0xa15f35fe",
+      "module": "sceNp",
+      "name": "sceNpBasicGetPlayersHistoryEntryCount"
+    },
+    {
+      "address": "0x00c8820c",
+      "nid": "0xa7a090e5",
+      "module": "sceNp",
+      "name": "sceNpScorePollAsync"
+    },
+    {
+      "address": "0x00c88244",
+      "nid": "0xa7bff757",
+      "module": "sceNp",
+      "name": "sceNpManagerGetStatus"
+    },
+    {
+      "address": "0x00c8827c",
+      "nid": "0xacb9ee8e",
+      "module": "sceNp",
+      "name": "sceNpBasicUnregisterHandler"
+    },
+    {
+      "address": "0x00c882b4",
+      "nid": "0xad218faf",
+      "module": "sceNp",
+      "name": "sceNpDrmIsAvailable"
+    },
+    {
+      "address": "0x00c882ec",
+      "nid": "0xafef640d",
+      "module": "sceNp",
+      "name": "sceNpBasicGetFriendListEntryCount"
+    },
+    {
+      "address": "0x00c88324",
+      "nid": "0xb1e0718b",
+      "module": "sceNp",
+      "name": "sceNpManagerGetAccountRegion"
+    },
+    {
+      "address": "0x00c8835c",
+      "nid": "0xb9f93bbb",
+      "module": "sceNp",
+      "name": "sceNpScoreCreateTitleCtx"
+    },
+    {
+      "address": "0x00c88394",
+      "nid": "0xbab91fc9",
+      "module": "sceNp",
+      "name": "sceNpBasicGetPlayersHistoryEntry"
+    },
+    {
+      "address": "0x00c883cc",
+      "nid": "0xbcdbb2ab",
+      "module": "sceNp",
+      "name": "sceNpBasicAddPlayersHistoryAsync"
+    },
+    {
+      "address": "0x00c88404",
+      "nid": "0xc5f4cf82",
+      "module": "sceNp",
+      "name": "sceNpScoreDestroyTransactionCtx"
+    },
+    {
+      "address": "0x00c8843c",
+      "nid": "0xce81c7f0",
+      "module": "sceNp",
+      "name": "sceNpLookupCreateTitleCtx"
+    },
+    {
+      "address": "0x00c88474",
+      "nid": "0xd12e40ae",
+      "module": "sceNp",
+      "name": "sceNpLookupNpIdAsync"
+    },
+    {
+      "address": "0x00c884ac",
+      "nid": "0xd208f91d",
+      "module": "sceNp",
+      "name": "sceNpUtilCmpNpId"
+    },
+    {
+      "address": "0x00c884e4",
+      "nid": "0xdfd63b62",
+      "module": "sceNp",
+      "name": "sceNpLookupUserProfile"
+    },
+    {
+      "address": "0x00c8851c",
+      "nid": "0xe035f7d6",
+      "module": "sceNp",
+      "name": "sceNpBasicGetEvent"
+    },
+    {
+      "address": "0x00c88554",
+      "nid": "0xe7dcd3b4",
+      "module": "sceNp",
+      "name": "sceNpManagerRegisterCallback"
+    },
+    {
+      "address": "0x00c8858c",
+      "nid": "0xea2e9ffc",
+      "module": "sceNp",
+      "name": "sceNpLookupCreateTransactionCtx"
+    },
+    {
+      "address": "0x00c885c4",
+      "nid": "0xee5b20d9",
+      "module": "sceNp",
+      "name": "sceNpScoreAbortTransaction"
+    },
+    {
+      "address": "0x00c885fc",
+      "nid": "0xf0b1e399",
+      "module": "sceNp",
+      "name": "sceNpScoreRecordScoreAsync"
+    },
+    {
+      "address": "0x00c88634",
+      "nid": "0xf2b3338a",
+      "module": "sceNp",
+      "name": "sceNpBasicGetBlockListEntry"
+    },
+    {
+      "address": "0x00c8866c",
+      "nid": "0xfb87cf5e",
+      "module": "sceNp",
+      "name": "sceNpLookupDestroyTransactionCtx"
+    },
+    {
+      "address": "0x00c886a4",
+      "nid": "0xfe37a7f4",
+      "module": "sceNp",
+      "name": "sceNpManagerGetNpId"
+    },
+    {
+      "address": "0x00c886dc",
+      "nid": "0x065b610d",
+      "module": "sceNpTus",
+      "name": "sceNpTusSetMultiSlotVariableAsync"
+    },
+    {
+      "address": "0x00c88714",
+      "nid": "0x1904435e",
+      "module": "sceNpTus",
+      "name": "sceNpTusCreateTransactionCtx"
+    },
+    {
+      "address": "0x00c8874c",
+      "nid": "0x19bce18c",
+      "module": "sceNpTus",
+      "name": "sceNpTusPollAsync"
+    },
+    {
+      "address": "0x00c88784",
+      "nid": "0x225aed26",
+      "module": "sceNpTus",
+      "name": "sceNpTusTerm"
+    },
+    {
+      "address": "0x00c887bc",
+      "nid": "0x2e162a62",
+      "module": "sceNpTus",
+      "name": "sceNpTusDestroyTitleCtx"
+    },
+    {
+      "address": "0x00c887f4",
+      "nid": "0x3175af23",
+      "module": "sceNpTus",
+      "name": "sceNpTusDeleteMultiSlotDataAsync"
+    },
+    {
+      "address": "0x00c8882c",
+      "nid": "0x38f364b0",
+      "module": "sceNpTus",
+      "name": "sceNpTusGetDataVUserAsync"
+    },
+    {
+      "address": "0x00c88864",
+      "nid": "0x44eca8b4",
+      "module": "sceNpTus",
+      "name": "sceNpTusDestroyTransactionCtx"
+    },
+    {
+      "address": "0x00c8889c",
+      "nid": "0x5175abb9",
+      "module": "sceNpTus",
+      "name": "sceNpTusGetDataAsync"
+    },
+    {
+      "address": "0x00c888d4",
+      "nid": "0x7caf58ee",
+      "module": "sceNpTus",
+      "name": "sceNpTusCreateTitleCtx"
+    },
+    {
+      "address": "0x00c8890c",
+      "nid": "0x8f87a06b",
+      "module": "sceNpTus",
+      "name": "sceNpTusInit"
+    },
+    {
+      "address": "0x00c88944",
+      "nid": "0x96a06212",
+      "module": "sceNpTus",
+      "name": "sceNpTusSetMultiSlotVariableVUserAsync"
+    },
+    {
+      "address": "0x00c8897c",
+      "nid": "0x9cc0cf44",
+      "module": "sceNpTus",
+      "name": "sceNpTusSetDataVUserAsync"
+    },
+    {
+      "address": "0x00c889b4",
+      "nid": "0xbb2877f2",
+      "module": "sceNpTus",
+      "name": "sceNpTusGetMultiSlotVariableAsync"
+    },
+    {
+      "address": "0x00c889ec",
+      "nid": "0xc2e18da8",
+      "module": "sceNpTus",
+      "name": "sceNpTusDeleteMultiSlotVariableVUserAsync"
+    },
+    {
+      "address": "0x00c88a24",
+      "nid": "0xc815b219",
+      "module": "sceNpTus",
+      "name": "sceNpTusDeleteMultiSlotDataVUserAsync"
+    },
+    {
+      "address": "0x00c88a5c",
+      "nid": "0xe847341f",
+      "module": "sceNpTus",
+      "name": "sceNpTusSetDataAsync"
+    },
+    {
+      "address": "0x00c88a94",
+      "nid": "0xf5363608",
+      "module": "sceNpTus",
+      "name": "sceNpTusDeleteMultiSlotVariableAsync"
+    },
+    {
+      "address": "0x00c88acc",
+      "nid": "0xfc7d346e",
+      "module": "sceNpTus",
+      "name": "sceNpTusGetMultiSlotVariableVUserAsync"
+    },
+    {
+      "address": "0x00c88b04",
+      "nid": "0x41251f74",
+      "module": "sceNp2",
+      "name": "sceNp2Init"
+    },
+    {
+      "address": "0x00c88b3c",
+      "nid": "0xaadb7c12",
+      "module": "sceNp2",
+      "name": "sceNp2Term"
+    },
+    {
+      "address": "0x00c88b74",
+      "nid": "0x432b3cbf",
+      "module": "sceNpUtil",
+      "name": "sceNpUtilBandwidthTestShutdown"
+    },
+    {
+      "address": "0x00c88bac",
+      "nid": "0xc2ced2b7",
+      "module": "sceNpUtil",
+      "name": "sceNpUtilBandwidthTestInitStart"
+    },
+    {
+      "address": "0x00c88be4",
+      "nid": "0xc880f37d",
+      "module": "sceNpUtil",
+      "name": "sceNpUtilBandwidthTestGetStatus"
+    },
+    {
+      "address": "0x00c88c1c",
+      "nid": "0x1197b52c",
+      "module": "sceNpTrophy",
+      "name": "sceNpTrophyRegisterContext"
+    },
+    {
+      "address": "0x00c88c54",
+      "nid": "0x1c25470d",
+      "module": "sceNpTrophy",
+      "name": "sceNpTrophyCreateHandle"
+    },
+    {
+      "address": "0x00c88c8c",
+      "nid": "0x370136fe",
+      "module": "sceNpTrophy",
+      "name": "sceNpTrophyGetRequiredDiskSpace"
+    },
+    {
+      "address": "0x00c88cc4",
+      "nid": "0x3741ecc7",
+      "module": "sceNpTrophy",
+      "name": "sceNpTrophyDestroyContext"
+    },
+    {
+      "address": "0x00c88cfc",
+      "nid": "0x39567781",
+      "module": "sceNpTrophy",
+      "name": "sceNpTrophyInit"
+    },
+    {
+      "address": "0x00c88d34",
+      "nid": "0x48bd97c7",
+      "module": "sceNpTrophy",
+      "name": "sceNpTrophyAbortHandle"
+    },
+    {
+      "address": "0x00c88d6c",
+      "nid": "0x623cd2dc",
+      "module": "sceNpTrophy",
+      "name": "sceNpTrophyDestroyHandle"
+    },
+    {
+      "address": "0x00c88da4",
+      "nid": "0x8ceedd21",
+      "module": "sceNpTrophy",
+      "name": "sceNpTrophyUnlockTrophy"
+    },
+    {
+      "address": "0x00c88ddc",
+      "nid": "0xa7fabf4d",
+      "module": "sceNpTrophy",
+      "name": "sceNpTrophyTerm"
+    },
+    {
+      "address": "0x00c88e14",
+      "nid": "0xe3bf9a28",
+      "module": "sceNpTrophy",
+      "name": "sceNpTrophyCreateContext"
+    },
+    {
+      "address": "0x00c88e4c",
+      "nid": "0xfce6d30a",
+      "module": "sceNpTrophy",
+      "name": "sceNpTrophyGetTrophyInfo"
+    },
+    {
+      "address": "0x00c88e84",
+      "nid": "0x04459230",
+      "module": "cellNetCtl",
+      "name": "cellNetCtlNetStartDialogLoadAsync"
+    },
+    {
+      "address": "0x00c88ebc",
+      "nid": "0x0f1f13d3",
+      "module": "cellNetCtl",
+      "name": "cellNetCtlNetStartDialogUnloadAsync"
+    },
+    {
+      "address": "0x00c88ef4",
+      "nid": "0x105ee2cb",
+      "module": "cellNetCtl",
+      "name": "cellNetCtlTerm"
+    },
+    {
+      "address": "0x00c88f2c",
+      "nid": "0x10dae56d",
+      "module": "cellNetCtl",
+      "name": "cellGameUpdateTerm"
+    },
+    {
+      "address": "0x00c88f64",
+      "nid": "0x1e585b5d",
+      "module": "cellNetCtl",
+      "name": "cellNetCtlGetInfo"
+    },
+    {
+      "address": "0x00c88f9c",
+      "nid": "0x3a12865f",
+      "module": "cellNetCtl",
+      "name": "cellNetCtlGetNatInfo"
+    },
+    {
+      "address": "0x00c88fd4",
+      "nid": "0x8b3eba69",
+      "module": "cellNetCtl",
+      "name": "cellNetCtlGetState"
+    },
+    {
+      "address": "0x00c8900c",
+      "nid": "0x99ab1a26",
+      "module": "cellNetCtl",
+      "name": "cellGameUpdateInit"
+    },
+    {
+      "address": "0x00c89044",
+      "nid": "0xa5e1fa60",
+      "module": "cellNetCtl",
+      "name": "cellGameUpdateCheckStartWithoutDialogAsync"
+    },
+    {
+      "address": "0x00c8907c",
+      "nid": "0xbd5a59fc",
+      "module": "cellNetCtl",
+      "name": "cellNetCtlInit"
+    },
+    {
+      "address": "0x00c890b4",
+      "nid": "0xd0a5d727",
+      "module": "cellNetCtl",
+      "name": "cellGameUpdateCheckStartAsync"
+    },
+    {
+      "address": "0x00c890ec",
+      "nid": "0xffa3d791",
+      "module": "cellNetCtl",
+      "name": "cellGameUpdateCheckFinishAsync"
+    },
+    {
+      "address": "0x00c89124",
+      "nid": "0x0d5b4a14",
+      "module": "sys_fs",
+      "name": "cellFsReadWithOffset"
+    },
+    {
+      "address": "0x00c8915c",
+      "nid": "0x0e2939e5",
+      "module": "sys_fs",
+      "name": "cellFsFtruncate"
+    },
+    {
+      "address": "0x00c89194",
+      "nid": "0x2796fdf3",
+      "module": "sys_fs",
+      "name": "cellFsRmdir"
+    },
+    {
+      "address": "0x00c891cc",
+      "nid": "0x2cb51f0d",
+      "module": "sys_fs",
+      "name": "cellFsClose"
+    },
+    {
+      "address": "0x00c89204",
+      "nid": "0x3f61245c",
+      "module": "sys_fs",
+      "name": "cellFsOpendir"
+    },
+    {
+      "address": "0x00c8923c",
+      "nid": "0x4d5ff8e2",
+      "module": "sys_fs",
+      "name": "cellFsRead"
+    },
+    {
+      "address": "0x00c89274",
+      "nid": "0x5c74903d",
+      "module": "sys_fs",
+      "name": "cellFsReaddir"
+    },
+    {
+      "address": "0x00c892ac",
+      "nid": "0x718bf5f8",
+      "module": "sys_fs",
+      "name": "cellFsOpen"
+    },
+    {
+      "address": "0x00c892e4",
+      "nid": "0x7de6dced",
+      "module": "sys_fs",
+      "name": "cellFsStat"
+    },
+    {
+      "address": "0x00c8931c",
+      "nid": "0x7f4677a8",
+      "module": "sys_fs",
+      "name": "cellFsUnlink"
+    },
+    {
+      "address": "0x00c89354",
+      "nid": "0x8cb722d5",
+      "module": "sys_fs",
+      "name": "cellFsWriteWithOffset"
+    },
+    {
+      "address": "0x00c8938c",
+      "nid": "0x9b882495",
+      "module": "sys_fs",
+      "name": "cellFsGetDirectoryEntries"
+    },
+    {
+      "address": "0x00c893c4",
+      "nid": "0x9f951810",
+      "module": "sys_fs",
+      "name": "cellFsAioFinish"
+    },
+    {
+      "address": "0x00c893fc",
+      "nid": "0xba901fe6",
+      "module": "sys_fs",
+      "name": "cellFsMkdir"
+    },
+    {
+      "address": "0x00c89434",
+      "nid": "0xcb588dba",
+      "module": "sys_fs",
+      "name": "cellFsFGetBlockSize"
+    },
+    {
+      "address": "0x00c8946c",
+      "nid": "0xdb869f20",
+      "module": "sys_fs",
+      "name": "cellFsAioInit"
+    },
+    {
+      "address": "0x00c894a4",
+      "nid": "0xecdcf2ab",
+      "module": "sys_fs",
+      "name": "cellFsWrite"
+    },
+    {
+      "address": "0x00c894dc",
+      "nid": "0xef3efa34",
+      "module": "sys_fs",
+      "name": "cellFsFstat"
+    },
+    {
+      "address": "0x00c89514",
+      "nid": "0xff42dcc3",
+      "module": "sys_fs",
+      "name": "cellFsClosedir"
+    },
+    {
+      "address": "0x00c8954c",
+      "nid": "0x011ee38b",
+      "module": "cellSpurs",
+      "name": "_cellSpursLFQueueInitialize"
+    },
+    {
+      "address": "0x00c89584",
+      "nid": "0x07529113",
+      "module": "cellSpurs",
+      "name": "cellSpursAttributeSetNamePrefix"
+    },
+    {
+      "address": "0x00c895bc",
+      "nid": "0x1051d134",
+      "module": "cellSpurs",
+      "name": "cellSpursAttributeEnableSpuPrintfIfAvailable"
+    },
+    {
+      "address": "0x00c895f4",
+      "nid": "0x16394a4e",
+      "module": "cellSpurs",
+      "name": "_cellSpursTasksetAttributeInitialize"
+    },
+    {
+      "address": "0x00c8962c",
+      "nid": "0x1656d49f",
+      "module": "cellSpurs",
+      "name": "cellSpursLFQueueAttachLv2EventQueue"
+    },
+    {
+      "address": "0x00c89664",
+      "nid": "0x22aab31d",
+      "module": "cellSpurs",
+      "name": "cellSpursEventFlagDetachLv2EventQueue"
+    },
+    {
+      "address": "0x00c8969c",
+      "nid": "0x373523d4",
+      "module": "cellSpurs",
+      "name": "cellSpursEventFlagWait"
+    },
+    {
+      "address": "0x00c896d4",
+      "nid": "0x4a6465e3",
+      "module": "cellSpurs",
+      "name": "cellSpursCreateTaskset2"
+    },
+    {
+      "address": "0x00c8970c",
+      "nid": "0x4ac7bae4",
+      "module": "cellSpurs",
+      "name": "cellSpursEventFlagClear"
+    },
+    {
+      "address": "0x00c89744",
+      "nid": "0x5ef96465",
+      "module": "cellSpurs",
+      "name": "_cellSpursEventFlagInitialize"
+    },
+    {
+      "address": "0x00c8977c",
+      "nid": "0x652b70e2",
+      "module": "cellSpurs",
+      "name": "cellSpursTasksetAttributeSetName"
+    },
+    {
+      "address": "0x00c897b4",
+      "nid": "0x73e06f91",
+      "module": "cellSpurs",
+      "name": "cellSpursLFQueueDetachLv2EventQueue"
+    },
+    {
+      "address": "0x00c897ec",
+      "nid": "0x80a29e27",
+      "module": "cellSpurs",
+      "name": "cellSpursSetPriorities"
+    },
+    {
+      "address": "0x00c89824",
+      "nid": "0x87630976",
+      "module": "cellSpurs",
+      "name": "cellSpursEventFlagAttachLv2EventQueue"
+    },
+    {
+      "address": "0x00c8985c",
+      "nid": "0x8a85674d",
+      "module": "cellSpurs",
+      "name": "_cellSpursLFQueuePushBody"
+    },
+    {
+      "address": "0x00c89894",
+      "nid": "0x95180230",
+      "module": "cellSpurs",
+      "name": "_cellSpursAttributeInitialize"
+    },
+    {
+      "address": "0x00c898cc",
+      "nid": "0x9dcbcb5d",
+      "module": "cellSpurs",
+      "name": "cellSpursAttributeEnableSystemWorkload"
+    },
+    {
+      "address": "0x00c89904",
+      "nid": "0x9f72add3",
+      "module": "cellSpurs",
+      "name": "cellSpursJoinTaskset"
+    },
+    {
+      "address": "0x00c8993c",
+      "nid": "0xa789e631",
+      "module": "cellSpurs",
+      "name": "cellSpursShutdownTaskset"
+    },
+    {
+      "address": "0x00c89974",
+      "nid": "0xaa6269a8",
+      "module": "cellSpurs",
+      "name": "cellSpursInitializeWithAttribute"
+    },
+    {
+      "address": "0x00c899ac",
+      "nid": "0xbeb600ac",
+      "module": "cellSpurs",
+      "name": "cellSpursCreateTask"
+    },
+    {
+      "address": "0x00c899e4",
+      "nid": "0xc10931cb",
+      "module": "cellSpurs",
+      "name": "cellSpursCreateTasksetWithAttribute"
+    },
+    {
+      "address": "0x00c89a1c",
+      "nid": "0xc2acdf43",
+      "module": "cellSpurs",
+      "name": "_cellSpursTasksetAttribute2Initialize"
+    },
+    {
+      "address": "0x00c89a54",
+      "nid": "0xca4c4600",
+      "module": "cellSpurs",
+      "name": "cellSpursFinalize"
+    },
+    {
+      "address": "0x00c89a8c",
+      "nid": "0x1686957e",
+      "module": "cellSpursJq",
+      "name": "cellSpursJobQueueAttributeSetMaxSizeJobDescriptor"
+    },
+    {
+      "address": "0x00c89ac4",
+      "nid": "0x1b6eea7e",
+      "module": "cellSpursJq",
+      "name": "_cellSpursJobQueuePortPushJobListBody"
+    },
+    {
+      "address": "0x00c89afc",
+      "nid": "0x26fa81b4",
+      "module": "cellSpursJq",
+      "name": "cellSpursJobQueuePortFinalize"
+    },
+    {
+      "address": "0x00c89b34",
+      "nid": "0x3d1294fc",
+      "module": "cellSpursJq",
+      "name": "cellSpursJobQueuePortInitialize"
+    },
+    {
+      "address": "0x00c89b6c",
+      "nid": "0x43ddab4f",
+      "module": "cellSpursJq",
+      "name": "cellSpursJobQueueAttributeInitialize"
+    },
+    {
+      "address": "0x00c89ba4",
+      "nid": "0x4e1a17a6",
+      "module": "cellSpursJq",
+      "name": "_cellSpursJobQueuePortPushBody"
+    },
+    {
+      "address": "0x00c89bdc",
+      "nid": "0x5fb9b05d",
+      "module": "cellSpursJq",
+      "name": "cellSpursJobQueueAttributeSetMaxGrab"
+    },
+    {
+      "address": "0x00c89c14",
+      "nid": "0x634b1502",
+      "module": "cellSpursJq",
+      "name": "cellSpursJobQueuePortSync"
+    },
+    {
+      "address": "0x00c89c4c",
+      "nid": "0x80a0264c",
+      "module": "cellSpursJq",
+      "name": "cellSpursJobQueuePortTrySync"
+    },
+    {
+      "address": "0x00c89c84",
+      "nid": "0x8c97a96c",
+      "module": "cellSpursJq",
+      "name": "cellSpursShutdownJobQueue"
+    },
+    {
+      "address": "0x00c89cbc",
+      "nid": "0x8ce4cffa",
+      "module": "cellSpursJq",
+      "name": "cellSpursJoinJobQueue"
+    },
+    {
+      "address": "0x00c89cf4",
+      "nid": "0x90e392cf",
+      "module": "cellSpursJq",
+      "name": "_cellSpursJobQueuePortPushJobBody2"
+    },
+    {
+      "address": "0x00c89d2c",
+      "nid": "0x9396be1d",
+      "module": "cellSpursJq",
+      "name": "_cellSpursJobQueuePortPushSync"
+    },
+    {
+      "address": "0x00c89d64",
+      "nid": "0xbd1c5d6b",
+      "module": "cellSpursJq",
+      "name": "_cellSpursJobQueuePortPushFlush"
+    },
+    {
+      "address": "0x00c89d9c",
+      "nid": "0xc343ee10",
+      "module": "cellSpursJq",
+      "name": "cellSpursGetJobQueueId"
+    },
+    {
+      "address": "0x00c89dd4",
+      "nid": "0xf244e799",
+      "module": "cellSpursJq",
+      "name": "_cellSpursCreateJobQueue"
+    },
+    {
+      "address": "0x00c89e0c",
+      "nid": "0x4014c246",
+      "module": "cellMusicUtility",
+      "name": "cellMusicSetVolume2"
+    },
+    {
+      "address": "0x00c89e44",
+      "nid": "0x61865281",
+      "module": "cellMusicUtility",
+      "name": "cellMusicInitialize2SystemWorkload"
+    },
+    {
+      "address": "0x00c89e7c",
+      "nid": "0x7be4dc31",
+      "module": "cellMusicUtility",
+      "name": "cellMusicFinalize2"
+    },
+    {
+      "address": "0x00c89eb4",
+      "nid": "0x98947a6e",
+      "module": "cellMusicUtility",
+      "name": "cellMusicSetPlaybackCommand2"
+    },
+    {
+      "address": "0x00c89eec",
+      "nid": "0xad04cddd",
+      "module": "cellMusicUtility",
+      "name": "cellMusicSelectContents2"
+    },
+    {
+      "address": "0x00c89f24",
+      "nid": "0xbe50b11e",
+      "module": "cellMusicUtility",
+      "name": "cellMusicInitialize2"
+    },
+    {
+      "address": "0x00c89f5c",
+      "nid": "0xf9073a24",
+      "module": "cellMusicUtility",
+      "name": "cellMusicGetVolume2"
+    },
+    {
+      "address": "0x00c89f94",
+      "nid": "0x055bd74d",
+      "module": "cellGcmSys",
+      "name": "cellGcmGetTiledPitchSize"
+    },
+    {
+      "address": "0x00c89fcc",
+      "nid": "0x06edea9e",
+      "module": "cellGcmSys",
+      "name": "cellGcmSetUserHandler"
+    },
+    {
+      "address": "0x00c8a004",
+      "nid": "0x15bae46b",
+      "module": "cellGcmSys",
+      "name": "_cellGcmInitBody"
+    },
+    {
+      "address": "0x00c8a03c",
+      "nid": "0x21397818",
+      "module": "cellGcmSys",
+      "name": "_cellGcmSetFlipCommand"
+    },
+    {
+      "address": "0x00c8a074",
+      "nid": "0x21ac3697",
+      "module": "cellGcmSys",
+      "name": "cellGcmAddressToOffset"
+    },
+    {
+      "address": "0x00c8a0ac",
+      "nid": "0x21cee035",
+      "module": "cellGcmSys",
+      "name": "cellGcmGetNotifyDataAddress"
+    },
+    {
+      "address": "0x00c8a0e4",
+      "nid": "0x2a6fba9c",
+      "module": "cellGcmSys",
+      "name": "cellGcmIoOffsetToAddress"
+    },
+    {
+      "address": "0x00c8a11c",
+      "nid": "0x3a33c1fd",
+      "module": "cellGcmSys",
+      "name": "_cellGcmFunc15"
+    },
+    {
+      "address": "0x00c8a154",
+      "nid": "0x4ae8d215",
+      "module": "cellGcmSys",
+      "name": "cellGcmSetFlipMode"
+    },
+    {
+      "address": "0x00c8a18c",
+      "nid": "0x5e2ee0f0",
+      "module": "cellGcmSys",
+      "name": "cellGcmGetDefaultCommandWordSize"
+    },
+    {
+      "address": "0x00c8a1c4",
+      "nid": "0x626e8518",
+      "module": "cellGcmSys",
+      "name": "cellGcmMapEaIoAddressWithFlags"
+    },
+    {
+      "address": "0x00c8a1fc",
+      "nid": "0x63441cb4",
+      "module": "cellGcmSys",
+      "name": "cellGcmMapEaIoAddress"
+    },
+    {
+      "address": "0x00c8a234",
+      "nid": "0x72a577ce",
+      "module": "cellGcmSys",
+      "name": "cellGcmGetFlipStatus"
+    },
+    {
+      "address": "0x00c8a26c",
+      "nid": "0x8cdf8c70",
+      "module": "cellGcmSys",
+      "name": "cellGcmGetDefaultSegmentWordSize"
+    },
+    {
+      "address": "0x00c8a2a4",
+      "nid": "0x9ba451e4",
+      "module": "cellGcmSys",
+      "name": "cellGcmSetDefaultFifoSize"
+    },
+    {
+      "address": "0x00c8a2dc",
+      "nid": "0xa47c09ff",
+      "module": "cellGcmSys",
+      "name": "cellGcmSetFlipStatus"
+    },
+    {
+      "address": "0x00c8a314",
+      "nid": "0xa53d12ae",
+      "module": "cellGcmSys",
+      "name": "cellGcmSetDisplayBuffer"
+    },
+    {
+      "address": "0x00c8a34c",
+      "nid": "0xa547adde",
+      "module": "cellGcmSys",
+      "name": "cellGcmGetControlRegister"
+    },
+    {
+      "address": "0x00c8a384",
+      "nid": "0xa6b180ac",
+      "module": "cellGcmSys",
+      "name": "cellGcmGetReportDataLocation"
+    },
+    {
+      "address": "0x00c8a3bc",
+      "nid": "0xa91b0402",
+      "module": "cellGcmSys",
+      "name": "cellGcmSetVBlankHandler"
+    },
+    {
+      "address": "0x00c8a3f4",
+      "nid": "0xb2e761d4",
+      "module": "cellGcmSys",
+      "name": "cellGcmResetFlipStatus"
+    },
+    {
+      "address": "0x00c8a42c",
+      "nid": "0xd8f88e1a",
+      "module": "cellGcmSys",
+      "name": "_cellGcmSetFlipCommandWithWaitLabel"
+    },
+    {
+      "address": "0x00c8a464",
+      "nid": "0xe315a0b2",
+      "module": "cellGcmSys",
+      "name": "cellGcmGetConfiguration"
+    },
+    {
+      "address": "0x00c8a49c",
+      "nid": "0xefd00f54",
+      "module": "cellGcmSys",
+      "name": "cellGcmUnmapEaIoAddress"
+    },
+    {
+      "address": "0x00c8a4d4",
+      "nid": "0xf80196c1",
+      "module": "cellGcmSys",
+      "name": "cellGcmGetLabelAddress"
+    },
+    {
+      "address": "0x00c8a50c",
+      "nid": "0x112a5ee9",
+      "module": "cellSysmodule",
+      "name": "cellSysmoduleUnloadModule"
+    },
+    {
+      "address": "0x00c8a544",
+      "nid": "0x32267a31",
+      "module": "cellSysmodule",
+      "name": "cellSysmoduleLoadModule"
+    },
+    {
+      "address": "0x00c8a57c",
+      "nid": "0x5a59e258",
+      "module": "cellSysmodule",
+      "name": "cellSysmoduleIsLoaded"
+    },
+    {
+      "address": "0x00c8a5b4",
+      "nid": "0x63ff6ff9",
+      "module": "cellSysmodule",
+      "name": "cellSysmoduleInitialize"
+    },
+    {
+      "address": "0x00c8a5ec",
+      "nid": "0x02ff3c1b",
+      "module": "cellSysutil",
+      "name": "cellSysutilUnregisterCallback"
+    },
+    {
+      "address": "0x00c8a624",
+      "nid": "0x0bae8772",
+      "module": "cellSysutil",
+      "name": "cellVideoOutConfigure"
+    },
+    {
+      "address": "0x00c8a65c",
+      "nid": "0x189a74da",
+      "module": "cellSysutil",
+      "name": "cellSysutilCheckCallback"
+    },
+    {
+      "address": "0x00c8a694",
+      "nid": "0x1e7bff94",
+      "module": "cellSysutil",
+      "name": "cellSysCacheMount"
+    },
+    {
+      "address": "0x00c8a6cc",
+      "nid": "0x1e930eef",
+      "module": "cellSysutil",
+      "name": "cellVideoOutGetDeviceInfo"
+    },
+    {
+      "address": "0x00c8a704",
+      "nid": "0x2a8eada2",
+      "module": "cellSysutil",
+      "name": "cellSaveDataFixedLoad2"
+    },
+    {
+      "address": "0x00c8a73c",
+      "nid": "0x2aae9ef5",
+      "module": "cellSysutil",
+      "name": "cellSaveDataFixedSave2"
+    },
+    {
+      "address": "0x00c8a774",
+      "nid": "0x35beade0",
+      "module": "cellSysutil",
+      "name": "cellOskDialogGetSize"
+    },
+    {
+      "address": "0x00c8a7ac",
+      "nid": "0x3d1e1931",
+      "module": "cellSysutil",
+      "name": "cellOskDialogUnloadAsync"
+    },
+    {
+      "address": "0x00c8a7e4",
+      "nid": "0x40e895d3",
+      "module": "cellSysutil",
+      "name": "cellSysutilGetSystemParamInt"
+    },
+    {
+      "address": "0x00c8a81c",
+      "nid": "0x62b0f803",
+      "module": "cellSysutil",
+      "name": "cellMsgDialogAbort"
+    },
+    {
+      "address": "0x00c8a854",
+      "nid": "0x7603d3db",
+      "module": "cellSysutil",
+      "name": "cellMsgDialogOpen2"
+    },
+    {
+      "address": "0x00c8a88c",
+      "nid": "0x7f21c918",
+      "module": "cellSysutil",
+      "name": "cellOskDialogAddSupportLanguage"
+    },
+    {
+      "address": "0x00c8a8c4",
+      "nid": "0x7fcfc915",
+      "module": "cellSysutil",
+      "name": "cellOskDialogLoadAsync"
+    },
+    {
+      "address": "0x00c8a8fc",
+      "nid": "0x887572d5",
+      "module": "cellSysutil",
+      "name": "cellVideoOutGetState"
+    },
+    {
+      "address": "0x00c8a934",
+      "nid": "0x8b7ed64b",
+      "module": "cellSysutil",
+      "name": "cellSaveDataAutoSave2"
+    },
+    {
+      "address": "0x00c8a96c",
+      "nid": "0x938013a0",
+      "module": "cellSysutil",
+      "name": "cellSysutilGetSystemParamString"
+    },
+    {
+      "address": "0x00c8a9a4",
+      "nid": "0x9d98afa0",
+      "module": "cellSysutil",
+      "name": "cellSysutilRegisterCallback"
+    },
+    {
+      "address": "0x00c8a9dc",
+      "nid": "0xa322db75",
+      "module": "cellSysutil",
+      "name": "cellVideoOutGetResolutionAvailability"
+    },
+    {
+      "address": "0x00c8aa14",
+      "nid": "0xb53c54fa",
+      "module": "cellSysutil",
+      "name": "cellOskDialogSetKeyLayoutOption"
+    },
+    {
+      "address": "0x00c8aa4c",
+      "nid": "0xb6d84526",
+      "module": "cellSysutil",
+      "name": "cellOskDialogAbort"
+    },
+    {
+      "address": "0x00c8aa84",
+      "nid": "0xe558748d",
+      "module": "cellSysutil",
+      "name": "cellVideoOutGetResolution"
+    },
+    {
+      "address": "0x00c8aabc",
+      "nid": "0xedadd797",
+      "module": "cellSysutil",
+      "name": "cellSaveDataDelete2"
+    },
+    {
+      "address": "0x00c8aaf4",
+      "nid": "0xf0ec3ccc",
+      "module": "cellSysutil",
+      "name": "cellOskDialogSetLayoutMode"
+    },
+    {
+      "address": "0x00c8ab2c",
+      "nid": "0xfbd5c856",
+      "module": "cellSysutil",
+      "name": "cellSaveDataAutoLoad2"
+    },
+    {
+      "address": "0x00c8ab64",
+      "nid": "0x55123a25",
+      "module": "cellUserInfo",
+      "name": "cellUserInfoSelectUser_SetList"
+    },
+    {
+      "address": "0x00c8ab9c",
+      "nid": "0xc55e338b",
+      "module": "cellUserInfo",
+      "name": "cellUserInfoGetList"
+    },
+    {
+      "address": "0x00c8abd4",
+      "nid": "0x0b168f92",
+      "module": "cellAudio",
+      "name": "cellAudioInit"
+    },
+    {
+      "address": "0x00c8ac0c",
+      "nid": "0x2ad091c6",
+      "module": "cellL10n",
+      "name": "UCS2stoUTF8s"
+    },
+    {
+      "address": "0x00c8ac44",
+      "nid": "0xfdbf6ac5",
+      "module": "cellL10n",
+      "name": "UTF8stoUCS2s"
+    },
+    {
+      "address": "0x00c8ac7c",
+      "nid": "0x250c386c",
+      "module": "cellHttp",
+      "name": "cellHttpInit"
+    },
+    {
+      "address": "0x00c8acb4",
+      "nid": "0x522180bc",
+      "module": "cellHttp",
+      "name": "cellHttpsInit"
+    },
+    {
+      "address": "0x00c8acec",
+      "nid": "0x61b2bade",
+      "module": "cellHttp",
+      "name": "cellHttpEndCookie"
+    },
+    {
+      "address": "0x00c8ad24",
+      "nid": "0x9638f766",
+      "module": "cellHttp",
+      "name": "cellHttpInitCookie"
+    },
+    {
+      "address": "0x00c8ad5c",
+      "nid": "0xd276ff1f",
+      "module": "cellHttp",
+      "name": "cellHttpEnd"
+    },
+    {
+      "address": "0x00c8ad94",
+      "nid": "0xe6d4202f",
+      "module": "cellHttp",
+      "name": "cellHttpsEnd"
+    },
+    {
+      "address": "0x00c8adcc",
+      "nid": "0x3539d233",
+      "module": "sceNpCommerce2",
+      "name": "sceNpCommerce2Init"
+    },
+    {
+      "address": "0x00c8ae04",
+      "nid": "0x4d4a094c",
+      "module": "sceNpCommerce2",
+      "name": "sceNpCommerce2Term"
+    },
+    {
+      "address": "0x00c8ae3c",
+      "nid": "0x6f67ea80",
+      "module": "sceNpCommerce2",
+      "name": "sceNpCommerce2DestroyCtx"
+    },
+    {
+      "address": "0x00c8ae74",
+      "nid": "0x9825a0fc",
+      "module": "sceNpCommerce2",
+      "name": "sceNpCommerce2DoProductBrowseStartAsync"
+    },
+    {
+      "address": "0x00c8aeac",
+      "nid": "0xa5a863fe",
+      "module": "sceNpCommerce2",
+      "name": "sceNpCommerce2SetBGDLAvailability"
+    },
+    {
+      "address": "0x00c8aee4",
+      "nid": "0xa9f945b3",
+      "module": "sceNpCommerce2",
+      "name": "sceNpCommerce2DoProductCodeFinishAsync"
+    },
+    {
+      "address": "0x00c8af1c",
+      "nid": "0xb23e3bd1",
+      "module": "sceNpCommerce2",
+      "name": "sceNpCommerce2DoProductBrowseFinishAsync"
+    },
+    {
+      "address": "0x00c8af54",
+      "nid": "0xd9fdcec2",
+      "module": "sceNpCommerce2",
+      "name": "sceNpCommerce2CreateCtx"
+    },
+    {
+      "address": "0x00c8af8c",
+      "nid": "0xde7ab33d",
+      "module": "sceNpCommerce2",
+      "name": "sceNpCommerce2DoProductCodeStartAsync"
+    },
+    {
+      "address": "0x00c8afc4",
+      "nid": "0xeef51be0",
+      "module": "sceNpCommerce2",
+      "name": "sceNpCommerce2ExecuteStoreBrowse"
+    },
+    {
+      "address": "0x00c8affc",
+      "nid": "0x1650aea4",
+      "module": "cellSsl",
+      "name": "cellSslEnd"
+    },
+    {
+      "address": "0x00c8b034",
+      "nid": "0x571afaca",
+      "module": "cellSsl",
+      "name": "cellSslCertificateLoader"
+    },
+    {
+      "address": "0x00c8b06c",
+      "nid": "0xfb02c9d2",
+      "module": "cellSsl",
+      "name": "cellSslInit"
+    },
+    {
+      "address": "0x00c8b0a4",
+      "nid": "0x042e74e3",
+      "module": "cellFont",
+      "name": "cellFontCreateRenderer"
+    },
+    {
+      "address": "0x00c8b0dc",
+      "nid": "0x073fa321",
+      "module": "cellFont",
+      "name": "cellFontOpenFontsetOnMemory"
+    },
+    {
+      "address": "0x00c8b114",
+      "nid": "0x1387c45c",
+      "module": "cellFont",
+      "name": "cellFontGetHorizontalLayout"
+    },
+    {
+      "address": "0x00c8b14c",
+      "nid": "0x21ebb248",
+      "module": "cellFont",
+      "name": "cellFontDestroyRenderer"
+    },
+    {
+      "address": "0x00c8b184",
+      "nid": "0x227e1e3c",
+      "module": "cellFont",
+      "name": "cellFontSetupRenderScalePixel"
+    },
+    {
+      "address": "0x00c8b1bc",
+      "nid": "0x297f0e93",
+      "module": "cellFont",
+      "name": "cellFontSetScalePixel"
+    },
+    {
+      "address": "0x00c8b1f4",
+      "nid": "0x40d40544",
+      "module": "cellFont",
+      "name": "cellFontEndLibrary"
+    },
+    {
+      "address": "0x00c8b22c",
+      "nid": "0x66a23100",
+      "module": "cellFont",
+      "name": "cellFontBindRenderer"
+    },
+    {
+      "address": "0x00c8b264",
+      "nid": "0x7ab47f7e",
+      "module": "cellFont",
+      "name": "cellFontEnd"
+    },
+    {
+      "address": "0x00c8b29c",
+      "nid": "0x88be4799",
+      "module": "cellFont",
+      "name": "cellFontRenderCharGlyphImage"
+    },
+    {
+      "address": "0x00c8b2d4",
+      "nid": "0x90b9465e",
+      "module": "cellFont",
+      "name": "cellFontRenderSurfaceInit"
+    },
+    {
+      "address": "0x00c8b30c",
+      "nid": "0xb276f1f6",
+      "module": "cellFont",
+      "name": "cellFontCloseFont"
+    },
+    {
+      "address": "0x00c8b344",
+      "nid": "0xb422b005",
+      "module": "cellFont",
+      "name": "cellFontRenderSurfaceSetScissor"
+    },
+    {
+      "address": "0x00c8b37c",
+      "nid": "0xd8eaee9f",
+      "module": "cellFont",
+      "name": "cellFontGetCharGlyphMetrics"
+    },
+    {
+      "address": "0x00c8b3b4",
+      "nid": "0xf03dcc29",
+      "module": "cellFont",
+      "name": "cellFontInitializeWithRevision"
+    },
+    {
+      "address": "0x00c8b3ec",
+      "nid": "0xf16379fa",
+      "module": "cellFont",
+      "name": "cellFontUnbindRenderer"
+    },
+    {
+      "address": "0x00c8b424",
+      "nid": "0x7a0a83c4",
+      "module": "cellFontFT",
+      "name": "cellFontInitLibraryFreeTypeWithRevision"
+    },
+    {
+      "address": "0x00c8b45c",
+      "nid": "0x75744e2a",
+      "module": "cellRtc",
+      "name": "cellRtcTickAddDays"
+    },
+    {
+      "address": "0x00c8b494",
+      "nid": "0x99b13034",
+      "module": "cellRtc",
+      "name": "cellRtcSetTick"
+    },
+    {
+      "address": "0x00c8b4cc",
+      "nid": "0x9dafc0d9",
+      "module": "cellRtc",
+      "name": "cellRtcGetCurrentTick"
+    },
+    {
+      "address": "0x00c8b504",
+      "nid": "0xc48d5002",
+      "module": "cellRtc",
+      "name": "cellRtcConvertUtcToLocalTime"
+    },
+    {
+      "address": "0x00c8b53c",
+      "nid": "0xc7bdb7eb",
+      "module": "cellRtc",
+      "name": "cellRtcGetTick"
+    },
+    {
+      "address": "0x00c8b574",
+      "nid": "0x0a563878",
+      "module": "cellVoice",
+      "name": "cellVoiceStart"
+    },
+    {
+      "address": "0x00c8b5ac",
+      "nid": "0x18d3df30",
+      "module": "cellVoice",
+      "name": "cellVoiceDisconnectIPortFromOPort"
+    },
+    {
+      "address": "0x00c8b5e4",
+      "nid": "0x2a01013e",
+      "module": "cellVoice",
+      "name": "cellVoiceCreateNotifyEventQueue"
+    },
+    {
+      "address": "0x00c8b61c",
+      "nid": "0x2de54871",
+      "module": "cellVoice",
+      "name": "cellVoiceCreatePort"
+    },
+    {
+      "address": "0x00c8b654",
+      "nid": "0x35d84910",
+      "module": "cellVoice",
+      "name": "cellVoiceSetNotifyEventQueue"
+    },
+    {
+      "address": "0x00c8b68c",
+      "nid": "0x36472c57",
+      "module": "cellVoice",
+      "name": "cellVoiceReadFromOPort"
+    },
+    {
+      "address": "0x00c8b6c4",
+      "nid": "0x3dad26e7",
+      "module": "cellVoice",
+      "name": "cellVoiceWriteToIPort"
+    },
+    {
+      "address": "0x00c8b6fc",
+      "nid": "0x54ac3519",
+      "module": "cellVoice",
+      "name": "cellVoiceGetPortInfo"
+    },
+    {
+      "address": "0x00c8b734",
+      "nid": "0x9f70c475",
+      "module": "cellVoice",
+      "name": "cellVoiceDeletePort"
+    },
+    {
+      "address": "0x00c8b76c",
+      "nid": "0xae6a21d5",
+      "module": "cellVoice",
+      "name": "cellVoiceConnectIPortToOPort"
+    },
+    {
+      "address": "0x00c8b7a4",
+      "nid": "0xc7cf1182",
+      "module": "cellVoice",
+      "name": "cellVoiceInit"
+    },
+    {
+      "address": "0x00c8b7dc",
+      "nid": "0xd3a84be1",
+      "module": "cellVoice",
+      "name": "cellVoiceStop"
+    },
+    {
+      "address": "0x00c8b814",
+      "nid": "0xdd000886",
+      "module": "cellVoice",
+      "name": "cellVoiceRemoveNotifyEventQueue"
+    },
+    {
+      "address": "0x00c8b84c",
+      "nid": "0xe0e1ae12",
+      "module": "cellVoice",
+      "name": "cellVoiceEnd"
+    },
+    {
+      "address": "0x00c8b884",
+      "nid": "0xff0fa43a",
+      "module": "cellVoice",
+      "name": "cellVoiceResetPort"
+    },
+    {
+      "address": "0x00c8b8bc",
+      "nid": "0x3a5d726a",
+      "module": "cellGame",
+      "name": "cellGameGetParamString"
+    },
+    {
+      "address": "0x00c8b8f4",
+      "nid": "0x42a2e133",
+      "module": "cellGame",
+      "name": "cellGameCreateGameData"
+    },
+    {
+      "address": "0x00c8b92c",
+      "nid": "0x70acec67",
+      "module": "cellGame",
+      "name": "cellGameContentPermit"
+    },
+    {
+      "address": "0x00c8b964",
+      "nid": "0xb0a1f8c6",
+      "module": "cellGame",
+      "name": "cellGameContentErrorDialog"
+    },
+    {
+      "address": "0x00c8b99c",
+      "nid": "0xb367c6e3",
+      "module": "cellGame",
+      "name": "cellGameDeleteGameData"
+    },
+    {
+      "address": "0x00c8b9d4",
+      "nid": "0xb7a45caf",
+      "module": "cellGame",
+      "name": "cellGameGetParamInt"
+    },
+    {
+      "address": "0x00c8ba0c",
+      "nid": "0xce4374f6",
+      "module": "cellGame",
+      "name": "cellGamePatchCheck"
+    },
+    {
+      "address": "0x00c8ba44",
+      "nid": "0xdaa5cd20",
+      "module": "cellGame",
+      "name": "cellGameSetParamString"
+    },
+    {
+      "address": "0x00c8ba7c",
+      "nid": "0xdb9819f3",
+      "module": "cellGame",
+      "name": "cellGameDataCheck"
+    },
+    {
+      "address": "0x00c8bab4",
+      "nid": "0xf52639ea",
+      "module": "cellGame",
+      "name": "cellGameBootCheck"
+    },
+    {
+      "address": "0x00c8baec",
+      "nid": "0x1a267f98",
+      "module": "cellSysmodule",
+      "name": "cellSysmoduleLoadModuleEx"
+    },
+    {
+      "address": "0x00c8bb24",
+      "nid": "0x96c07adf",
+      "module": "cellSysmodule",
+      "name": "cellSysmoduleFinalize"
+    },
+    {
+      "address": "0x00c8bb5c",
+      "nid": "0xfd0e1cac",
+      "module": "cellSysmodule",
+      "name": "cellSysmoduleUnloadModuleEx"
+    },
+    {
+      "address": "0x00c8bb94",
+      "nid": "0x59d1629a",
+      "module": "cellSysutilNpEula",
+      "name": "sceNpEulaCheckEulaStatus"
+    },
+    {
+      "address": "0x00c8bbcc",
+      "nid": "0xb48636c4",
+      "module": "sys_net",
+      "name": "sys_net_show_ifconfig"
+    },
+    {
+      "address": "0x00c8bc04",
+      "nid": "0xdabbc2c0",
+      "module": "sys_net",
+      "name": "inet_addr"
+    },
+    {
+      "address": "0x00c8bc3c",
+      "nid": "0xbdc07fd5",
+      "module": "sceNp",
+      "name": "sceNpManagerGetNetworkTime"
+    },
+    {
+      "address": "0x00c8bc74",
+      "nid": "0xf042b14f",
+      "module": "sceNp",
+      "name": "sceNpDrmIsAvailable2"
+    },
+    {
+      "address": "0x00c8bcac",
+      "nid": "0x4cef342e",
+      "module": "sys_fs",
+      "name": "cellFsAioWrite"
+    },
+    {
+      "address": "0x00c8bce4",
+      "nid": "0x6d3bb15b",
+      "module": "sys_fs",
+      "name": "cellFsSdataOpenByFd"
+    },
+    {
+      "address": "0x00c8bd1c",
+      "nid": "0x7f13fc8c",
+      "module": "sys_fs",
+      "name": "cellFsAioCancel"
+    },
+    {
+      "address": "0x00c8bd54",
+      "nid": "0x967a162b",
+      "module": "sys_fs",
+      "name": "cellFsFsync"
+    },
+    {
+      "address": "0x00c8bd8c",
+      "nid": "0xa397d042",
+      "module": "sys_fs",
+      "name": "cellFsLseek"
+    },
+    {
+      "address": "0x00c8bdc4",
+      "nid": "0xaa3b4bcd",
+      "module": "sys_fs",
+      "name": "cellFsGetFreeSize"
+    },
+    {
+      "address": "0x00c8bdfc",
+      "nid": "0xb1840b53",
+      "module": "sys_fs",
+      "name": "cellFsSdataOpen"
+    },
+    {
+      "address": "0x00c8be34",
+      "nid": "0xc1c507e7",
+      "module": "sys_fs",
+      "name": "cellFsAioRead"
+    },
+    {
+      "address": "0x00c8be6c",
+      "nid": "0x182d9890",
+      "module": "cellSpurs",
+      "name": "cellSpursRequestIdleSpu"
+    },
+    {
+      "address": "0x00c8bea4",
+      "nid": "0x1ebcf459",
+      "module": "cellSpurs",
+      "name": "cellSpursDestroyTaskset2"
+    },
+    {
+      "address": "0x00c8bedc",
+      "nid": "0x1f402f8f",
+      "module": "cellSpurs",
+      "name": "cellSpursGetInfo"
+    },
+    {
+      "address": "0x00c8bf14",
+      "nid": "0x4a5eab63",
+      "module": "cellSpurs",
+      "name": "cellSpursWorkloadAttributeSetName"
+    },
+    {
+      "address": "0x00c8bf4c",
+      "nid": "0x4e153e3e",
+      "module": "cellSpurs",
+      "name": "cellSpursGetWorkloadInfo"
+    },
+    {
+      "address": "0x00c8bf84",
+      "nid": "0x4e66d483",
+      "module": "cellSpurs",
+      "name": "cellSpursDetachLv2EventQueue"
+    },
+    {
+      "address": "0x00c8bfbc",
+      "nid": "0x57e4dec3",
+      "module": "cellSpurs",
+      "name": "cellSpursRemoveWorkload"
+    },
+    {
+      "address": "0x00c8bff4",
+      "nid": "0x5fd43fe4",
+      "module": "cellSpurs",
+      "name": "cellSpursWaitForWorkloadShutdown"
+    },
+    {
+      "address": "0x00c8c02c",
+      "nid": "0x7fdf4fef",
+      "module": "cellSpurs",
+      "name": "cellSpursBarrierInitialize"
+    },
+    {
+      "address": "0x00c8c064",
+      "nid": "0x838fa4f0",
+      "module": "cellSpurs",
+      "name": "cellSpursTryJoinTask2"
+    },
+    {
+      "address": "0x00c8c09c",
+      "nid": "0x8adadf65",
+      "module": "cellSpurs",
+      "name": "_cellSpursTaskAttribute2Initialize"
+    },
+    {
+      "address": "0x00c8c0d4",
+      "nid": "0x9034e538",
+      "module": "cellSpurs",
+      "name": "cellSpursTaskGetContextSaveAreaSize"
+    },
+    {
+      "address": "0x00c8c10c",
+      "nid": "0x98d5b343",
+      "module": "cellSpurs",
+      "name": "cellSpursShutdownWorkload"
+    },
+    {
+      "address": "0x00c8c144",
+      "nid": "0x9fcb567b",
+      "module": "cellSpurs",
+      "name": "cellSpursGetTasksetInfo"
+    },
+    {
+      "address": "0x00c8c17c",
+      "nid": "0xa7a94892",
+      "module": "cellSpurs",
+      "name": "cellSpursJoinTask2"
+    },
+    {
+      "address": "0x00c8c1b4",
+      "nid": "0xb9bc6207",
+      "module": "cellSpurs",
+      "name": "cellSpursAttachLv2EventQueue"
+    },
+    {
+      "address": "0x00c8c1ec",
+      "nid": "0xc0158d8b",
+      "module": "cellSpurs",
+      "name": "cellSpursAddWorkloadWithAttribute"
+    },
+    {
+      "address": "0x00c8c224",
+      "nid": "0xd2e23fa9",
+      "module": "cellSpurs",
+      "name": "cellSpursSetExceptionEventHandler"
+    },
+    {
+      "address": "0x00c8c25c",
+      "nid": "0xe0a6dbe4",
+      "module": "cellSpurs",
+      "name": "_cellSpursSendSignal"
+    },
+    {
+      "address": "0x00c8c294",
+      "nid": "0xe14ca62d",
+      "module": "cellSpurs",
+      "name": "cellSpursCreateTask2"
+    },
+    {
+      "address": "0x00c8c2cc",
+      "nid": "0xefeb2679",
+      "module": "cellSpurs",
+      "name": "_cellSpursWorkloadAttributeInitialize"
+    },
+    {
+      "address": "0x00c8c304",
+      "nid": "0xf843818d",
+      "module": "cellSpurs",
+      "name": "cellSpursReadyCountStore"
+    },
+    {
+      "address": "0x00c8c33c",
+      "nid": "0x4524cccd",
+      "module": "cellGcmSys",
+      "name": "cellGcmBindTile"
+    },
+    {
+      "address": "0x00c8c374",
+      "nid": "0xbd100dbc",
+      "module": "cellGcmSys",
+      "name": "cellGcmSetTileInfo"
+    },
+    {
+      "address": "0x00c8c3ac",
+      "nid": "0xd34a420d",
+      "module": "cellGcmSys",
+      "name": "cellGcmSetZcull"
+    },
+    {
+      "address": "0x00c8c3e4",
+      "nid": "0x3261a9c8",
+      "module": "cellSysutil",
+      "name": "cellWebBrowserConfigSetDisableTabs"
+    },
+    {
+      "address": "0x00c8c41c",
+      "nid": "0x4692ab35",
+      "module": "cellSysutil",
+      "name": "cellAudioOutConfigure"
+    },
+    {
+      "address": "0x00c8c454",
+      "nid": "0x58c89c4a",
+      "module": "cellSysutil",
+      "name": "cellWebBrowserEstimate"
+    },
+    {
+      "address": "0x00c8c48c",
+      "nid": "0x6c1082aa",
+      "module": "cellSysutil",
+      "name": "cellWebBrowserConfigWithVer"
+    },
+    {
+      "address": "0x00c8c4c4",
+      "nid": "0x749c9b5f",
+      "module": "cellSysutil",
+      "name": "cellWebBrowserInitialize"
+    },
+    {
+      "address": "0x00c8c4fc",
+      "nid": "0x76fc8fb1",
+      "module": "cellSysutil",
+      "name": "cellWebBrowserConfigSetHeapSize"
+    },
+    {
+      "address": "0x00c8c534",
+      "nid": "0x8a4cb646",
+      "module": "cellSysutil",
+      "name": "cellWebBrowserCreateWithConfig"
+    },
+    {
+      "address": "0x00c8c56c",
+      "nid": "0x93ced48d",
+      "module": "cellSysutil",
+      "name": "cellWebBrowserShutdown"
+    },
+    {
+      "address": "0x00c8c5a4",
+      "nid": "0x9c9fe6a4",
+      "module": "cellSysutil",
+      "name": "cellWebBrowserConfigSetFunction"
+    },
+    {
+      "address": "0x00c8c5dc",
+      "nid": "0xc01b4e7c",
+      "module": "cellSysutil",
+      "name": "cellAudioOutGetSoundAvailability"
+    },
+    {
+      "address": "0x00c8c614",
+      "nid": "0xe8dee79c",
+      "module": "cellSysutil",
+      "name": "cellWebBrowserDestroy2"
+    },
+    {
+      "address": "0x00c8c64c",
+      "nid": "0x377e0cd9",
+      "module": "cellAudio",
+      "name": "cellAudioSetNotifyEventQueue"
+    },
+    {
+      "address": "0x00c8c684",
+      "nid": "0x4109d08c",
+      "module": "cellAudio",
+      "name": "cellAudioGetPortTimestamp"
+    },
+    {
+      "address": "0x00c8c6bc",
+      "nid": "0x4129fe2d",
+      "module": "cellAudio",
+      "name": "cellAudioPortClose"
+    },
+    {
+      "address": "0x00c8c6f4",
+      "nid": "0x5b1e2c73",
+      "module": "cellAudio",
+      "name": "cellAudioPortStop"
+    },
+    {
+      "address": "0x00c8c72c",
+      "nid": "0x74a66af0",
+      "module": "cellAudio",
+      "name": "cellAudioGetPortConfig"
+    },
+    {
+      "address": "0x00c8c764",
+      "nid": "0x89be28f2",
+      "module": "cellAudio",
+      "name": "cellAudioPortStart"
+    },
+    {
+      "address": "0x00c8c79c",
+      "nid": "0xca5ac370",
+      "module": "cellAudio",
+      "name": "cellAudioQuit"
+    },
+    {
+      "address": "0x00c8c7d4",
+      "nid": "0xcd7bc431",
+      "module": "cellAudio",
+      "name": "cellAudioPortOpen"
+    },
+    {
+      "address": "0x00c8c80c",
+      "nid": "0xe4046afe",
+      "module": "cellAudio",
+      "name": "cellAudioGetPortBlockTag"
+    },
+    {
+      "address": "0x00c8c844",
+      "nid": "0xff3626fd",
+      "module": "cellAudio",
+      "name": "cellAudioRemoveNotifyEventQueue"
+    },
+    {
+      "address": "0x00c8c87c",
+      "nid": "0x91f2b7b0",
+      "module": "cellSync",
+      "name": "cellSyncMutexUnlock"
+    },
+    {
+      "address": "0x00c8c8b4",
+      "nid": "0xa9072dee",
+      "module": "cellSync",
+      "name": "cellSyncMutexInitialize"
+    },
+    {
+      "address": "0x00c8c8ec",
+      "nid": "0xd06918c4",
+      "module": "cellSync",
+      "name": "cellSyncMutexTryLock"
+    },
+    {
+      "address": "0x00c8c924",
+      "nid": "0x0053e2d8",
+      "module": "libvdec",
+      "name": "cellVdecOpenEx"
+    },
+    {
+      "address": "0x00c8c95c",
+      "nid": "0x16698e83",
+      "module": "libvdec",
+      "name": "cellVdecClose"
+    },
+    {
+      "address": "0x00c8c994",
+      "nid": "0x17c702b9",
+      "module": "libvdec",
+      "name": "cellVdecGetPicItem"
+    },
+    {
+      "address": "0x00c8c9cc",
+      "nid": "0x2bf4ddd2",
+      "module": "libvdec",
+      "name": "cellVdecDecodeAu"
+    },
+    {
+      "address": "0x00c8ca04",
+      "nid": "0x807c861a",
+      "module": "libvdec",
+      "name": "cellVdecGetPicture"
+    },
+    {
+      "address": "0x00c8ca3c",
+      "nid": "0x824433f0",
+      "module": "libvdec",
+      "name": "cellVdecEndSeq"
+    },
+    {
+      "address": "0x00c8ca74",
+      "nid": "0xc757c2aa",
+      "module": "libvdec",
+      "name": "cellVdecStartSeq"
+    },
+    {
+      "address": "0x00c8caac",
+      "nid": "0xc982a84a",
+      "module": "libvdec",
+      "name": "cellVdecQueryAttrEx"
+    },
+    {
+      "address": "0x00c8cae4",
+      "nid": "0x1529e506",
+      "module": "cellAdec",
+      "name": "cellAdecDecodeAu"
+    },
+    {
+      "address": "0x00c8cb1c",
+      "nid": "0x487b613e",
+      "module": "cellAdec",
+      "name": "cellAdecStartSeq"
+    },
+    {
+      "address": "0x00c8cb54",
+      "nid": "0x7e4a4a49",
+      "module": "cellAdec",
+      "name": "cellAdecQueryAttr"
+    },
+    {
+      "address": "0x00c8cb8c",
+      "nid": "0x847d2380",
+      "module": "cellAdec",
+      "name": "cellAdecClose"
+    },
+    {
+      "address": "0x00c8cbc4",
+      "nid": "0x8b5551a4",
+      "module": "cellAdec",
+      "name": "cellAdecOpenEx"
+    },
+    {
+      "address": "0x00c8cbfc",
+      "nid": "0x97ff2af1",
+      "module": "cellAdec",
+      "name": "cellAdecGetPcm"
+    },
+    {
+      "address": "0x00c8cc34",
+      "nid": "0xbd75f78b",
+      "module": "cellAdec",
+      "name": "cellAdecGetPcmItem"
+    },
+    {
+      "address": "0x00c8cc6c",
+      "nid": "0xe2ea549b",
+      "module": "cellAdec",
+      "name": "cellAdecEndSeq"
+    },
+    {
+      "address": "0x00c8cca4",
+      "nid": "0xf8509925",
+      "module": "cellRtc",
+      "name": "cellRtcTickAddMicroseconds"
+    },
+    {
+      "address": "0x00c8ccdc",
+      "nid": "0x1573dc3f",
+      "module": "sysPrxForUser",
+      "name": "sys_lwmutex_lock"
+    },
+    {
+      "address": "0x00c8cd14",
+      "nid": "0x1bc200f4",
+      "module": "sysPrxForUser",
+      "name": "sys_lwmutex_unlock"
+    },
+    {
+      "address": "0x00c8cd4c",
+      "nid": "0x1c9a942c",
+      "module": "sysPrxForUser",
+      "name": "sys_lwcond_destroy"
+    },
+    {
+      "address": "0x00c8cd84",
+      "nid": "0x24a1ea07",
+      "module": "sysPrxForUser",
+      "name": "sys_ppu_thread_create"
+    },
+    {
+      "address": "0x00c8cdbc",
+      "nid": "0x26090058",
+      "module": "sysPrxForUser",
+      "name": "sys_prx_load_module"
+    },
+    {
+      "address": "0x00c8cdf4",
+      "nid": "0x2a6d9d51",
+      "module": "sysPrxForUser",
+      "name": "sys_lwcond_wait"
+    },
+    {
+      "address": "0x00c8ce2c",
+      "nid": "0x2c847572",
+      "module": "sysPrxForUser",
+      "name": "_sys_process_atexitspawn"
+    },
+    {
+      "address": "0x00c8ce64",
+      "nid": "0x2f85c0ef",
+      "module": "sysPrxForUser",
+      "name": "sys_lwmutex_create"
+    },
+    {
+      "address": "0x00c8ce9c",
+      "nid": "0x350d454e",
+      "module": "sysPrxForUser",
+      "name": "sys_ppu_thread_get_id"
+    },
+    {
+      "address": "0x00c8ced4",
+      "nid": "0x35168520",
+      "module": "sysPrxForUser",
+      "name": "_sys_heap_malloc"
+    },
+    {
+      "address": "0x00c8cf0c",
+      "nid": "0x409ad939",
+      "module": "sysPrxForUser",
+      "name": "sys_mmapper_free_memory"
+    },
+    {
+      "address": "0x00c8cf44",
+      "nid": "0x42b23552",
+      "module": "sysPrxForUser",
+      "name": "sys_prx_register_library"
+    },
+    {
+      "address": "0x00c8cf7c",
+      "nid": "0x44265c08",
+      "module": "sysPrxForUser",
+      "name": "_sys_heap_memalign"
+    },
+    {
+      "address": "0x00c8cfb4",
+      "nid": "0x45fe2fce",
+      "module": "sysPrxForUser",
+      "name": "_sys_spu_printf_initialize"
+    },
+    {
+      "address": "0x00c8cfec",
+      "nid": "0x4643ba6e",
+      "module": "sysPrxForUser",
+      "name": "sys_mmapper_unmap_memory"
+    },
+    {
+      "address": "0x00c8d024",
+      "nid": "0x4f7172c9",
+      "module": "sysPrxForUser",
+      "name": "sys_process_is_stack"
+    },
+    {
+      "address": "0x00c8d05c",
+      "nid": "0x67f9fedb",
+      "module": "sysPrxForUser",
+      "name": "sys_game_process_exitspawn2"
+    },
+    {
+      "address": "0x00c8d094",
+      "nid": "0x744680a2",
+      "module": "sysPrxForUser",
+      "name": "sys_initialize_tls"
+    },
+    {
+      "address": "0x00c8d0cc",
+      "nid": "0x80fb0c19",
+      "module": "sysPrxForUser",
+      "name": "sys_prx_stop_module"
+    },
+    {
+      "address": "0x00c8d104",
+      "nid": "0x8461e528",
+      "module": "sysPrxForUser",
+      "name": "sys_time_get_system_time"
+    },
+    {
+      "address": "0x00c8d13c",
+      "nid": "0x84bb6774",
+      "module": "sysPrxForUser",
+      "name": "sys_prx_get_module_info"
+    },
+    {
+      "address": "0x00c8d174",
+      "nid": "0x8a561d92",
+      "module": "sysPrxForUser",
+      "name": "_sys_heap_free"
+    },
+    {
+      "address": "0x00c8d1ac",
+      "nid": "0x96328741",
+      "module": "sysPrxForUser",
+      "name": "_sys_process_at_Exitspawn"
+    },
+    {
+      "address": "0x00c8d1e4",
+      "nid": "0x9f18429d",
+      "module": "sysPrxForUser",
+      "name": "sys_prx_start_module"
+    },
+    {
+      "address": "0x00c8d21c",
+      "nid": "0xa2c7ba64",
+      "module": "sysPrxForUser",
+      "name": "sys_prx_exitspawn_with_level"
+    },
+    {
+      "address": "0x00c8d254",
+      "nid": "0xa330ad84",
+      "module": "sysPrxForUser",
+      "name": "sys_prx_load_module_on_memcontainer_by_fd"
+    },
+    {
+      "address": "0x00c8d28c",
+      "nid": "0xa3e3be68",
+      "module": "sysPrxForUser",
+      "name": "sys_ppu_thread_once"
+    },
+    {
+      "address": "0x00c8d2c4",
+      "nid": "0xa5d06bf0",
+      "module": "sysPrxForUser",
+      "name": "sys_prx_get_module_list"
+    },
+    {
+      "address": "0x00c8d2fc",
+      "nid": "0xaa6d9bff",
+      "module": "sysPrxForUser",
+      "name": "sys_prx_load_module_on_memcontainer"
+    },
+    {
+      "address": "0x00c8d334",
+      "nid": "0xaeb78725",
+      "module": "sysPrxForUser",
+      "name": "sys_lwmutex_trylock"
+    },
+    {
+      "address": "0x00c8d36c",
+      "nid": "0xaede4b03",
+      "module": "sysPrxForUser",
+      "name": "_sys_heap_delete_heap"
+    },
+    {
+      "address": "0x00c8d3a4",
+      "nid": "0xaff080a4",
+      "module": "sysPrxForUser",
+      "name": "sys_ppu_thread_exit"
+    },
+    {
+      "address": "0x00c8d3dc",
+      "nid": "0xb257540b",
+      "module": "sysPrxForUser",
+      "name": "sys_mmapper_allocate_memory"
+    },
+    {
+      "address": "0x00c8d414",
+      "nid": "0xb2fcf2c8",
+      "module": "sysPrxForUser",
+      "name": "_sys_heap_create_heap"
+    },
+    {
+      "address": "0x00c8d44c",
+      "nid": "0xc3476d0c",
+      "module": "sysPrxForUser",
+      "name": "sys_lwmutex_destroy"
+    },
+    {
+      "address": "0x00c8d484",
+      "nid": "0xda0eb71a",
+      "module": "sysPrxForUser",
+      "name": "sys_lwcond_create"
+    },
+    {
+      "address": "0x00c8d4bc",
+      "nid": "0xdc578057",
+      "module": "sysPrxForUser",
+      "name": "sys_mmapper_map_memory"
+    },
+    {
+      "address": "0x00c8d4f4",
+      "nid": "0xdd3b27ac",
+      "module": "sysPrxForUser",
+      "name": "_sys_spu_printf_finalize"
+    },
+    {
+      "address": "0x00c8d52c",
+      "nid": "0xe6f2c1e7",
+      "module": "sysPrxForUser",
+      "name": "sys_process_exit"
+    },
+    {
+      "address": "0x00c8d564",
+      "nid": "0xe9a1bd84",
+      "module": "sysPrxForUser",
+      "name": "sys_lwcond_signal_all"
+    },
+    {
+      "address": "0x00c8d59c",
+      "nid": "0xef68c17c",
+      "module": "sysPrxForUser",
+      "name": "sys_prx_load_module_by_fd"
+    },
+    {
+      "address": "0x00c8d5d4",
+      "nid": "0xef87a695",
+      "module": "sysPrxForUser",
+      "name": "sys_lwcond_signal"
+    },
+    {
+      "address": "0x00c8d60c",
+      "nid": "0xf0aece0d",
+      "module": "sysPrxForUser",
+      "name": "sys_prx_unload_module"
+    },
+    {
+      "address": "0x01b6ad2c",
+      "nid": "0x15b0b0cd",
+      "module": "cellSysutil",
+      "name": "cellVideoOutGetConfiguration"
+    },
+    {
+      "address": "0x01b6ad4c",
+      "nid": "0x04e83d2c",
+      "module": "sysPrxForUser",
+      "name": "_sys_strncmp"
+    },
+    {
+      "address": "0x01b6ad6c",
+      "nid": "0x1573dc3f",
+      "module": "sysPrxForUser",
+      "name": "sys_lwmutex_lock"
+    },
+    {
+      "address": "0x01b6ad8c",
+      "nid": "0x1bc200f4",
+      "module": "sysPrxForUser",
+      "name": "sys_lwmutex_unlock"
+    },
+    {
+      "address": "0x01b6adac",
+      "nid": "0x24a1ea07",
+      "module": "sysPrxForUser",
+      "name": "sys_ppu_thread_create"
+    },
+    {
+      "address": "0x01b6adcc",
+      "nid": "0x2f85c0ef",
+      "module": "sysPrxForUser",
+      "name": "sys_lwmutex_create"
+    },
+    {
+      "address": "0x01b6adec",
+      "nid": "0x68b9b011",
+      "module": "sysPrxForUser",
+      "name": "_sys_memset"
+    },
+    {
+      "address": "0x01b6ae0c",
+      "nid": "0x9f04f7af",
+      "module": "sysPrxForUser",
+      "name": "_sys_printf"
+    },
+    {
+      "address": "0x01b6ae2c",
+      "nid": "0xaff080a4",
+      "module": "sysPrxForUser",
+      "name": "sys_ppu_thread_exit"
+    },
+    {
+      "address": "0x01b6ae4c",
+      "nid": "0xc3476d0c",
+      "module": "sysPrxForUser",
+      "name": "sys_lwmutex_destroy"
+    },
+    {
+      "address": "0x01b6ae6c",
+      "nid": "0xe75c40f2",
+      "module": "sysPrxForUser",
+      "name": "sys_process_get_paramsfo"
+    },
+    {
+      "address": "0x01b9d718",
+      "nid": "0x05893e7c",
+      "module": "cellLibprof",
+      "name": "cellUserTraceRegister"
+    },
+    {
+      "address": "0x01b9d738",
+      "nid": "0x6d045c2e",
+      "module": "cellLibprof",
+      "name": "cellUserTraceUnregister"
+    },
+    {
+      "address": "0x01b9d758",
+      "nid": "0x04e83d2c",
+      "module": "sysPrxForUser",
+      "name": "_sys_strncmp"
+    },
+    {
+      "address": "0x01b9d778",
+      "nid": "0x052d29a6",
+      "module": "sysPrxForUser",
+      "name": "_sys_strcat"
+    },
+    {
+      "address": "0x01b9d798",
+      "nid": "0x0618936b",
+      "module": "sysPrxForUser",
+      "name": "_sys_vsnprintf"
+    },
+    {
+      "address": "0x01b9d7b8",
+      "nid": "0x06574237",
+      "module": "sysPrxForUser",
+      "name": "_sys_snprintf"
+    },
+    {
+      "address": "0x01b9d7d8",
+      "nid": "0x1573dc3f",
+      "module": "sysPrxForUser",
+      "name": "sys_lwmutex_lock"
+    },
+    {
+      "address": "0x01b9d7f8",
+      "nid": "0x1bc200f4",
+      "module": "sysPrxForUser",
+      "name": "sys_lwmutex_unlock"
+    },
+    {
+      "address": "0x01b9d818",
+      "nid": "0x1c9a942c",
+      "module": "sysPrxForUser",
+      "name": "sys_lwcond_destroy"
+    },
+    {
+      "address": "0x01b9d838",
+      "nid": "0x24a1ea07",
+      "module": "sysPrxForUser",
+      "name": "sys_ppu_thread_create"
+    },
+    {
+      "address": "0x01b9d858",
+      "nid": "0x2a6d9d51",
+      "module": "sysPrxForUser",
+      "name": "sys_lwcond_wait"
+    },
+    {
+      "address": "0x01b9d878",
+      "nid": "0x2d36462b",
+      "module": "sysPrxForUser",
+      "name": "_sys_strlen"
+    },
+    {
+      "address": "0x01b9d898",
+      "nid": "0x2f85c0ef",
+      "module": "sysPrxForUser",
+      "name": "sys_lwmutex_create"
+    },
+    {
+      "address": "0x01b9d8b8",
+      "nid": "0x5fdfb2fe",
+      "module": "sysPrxForUser",
+      "name": "_sys_spu_printf_detach_group"
+    },
+    {
+      "address": "0x01b9d8d8",
+      "nid": "0x68b9b011",
+      "module": "sysPrxForUser",
+      "name": "_sys_memset"
+    },
+    {
+      "address": "0x01b9d8f8",
+      "nid": "0x6bf66ea7",
+      "module": "sysPrxForUser",
+      "name": "_sys_memcpy"
+    },
+    {
+      "address": "0x01b9d918",
+      "nid": "0x996f7cf8",
+      "module": "sysPrxForUser",
+      "name": "_sys_strncat"
+    },
+    {
+      "address": "0x01b9d938",
+      "nid": "0x99c88692",
+      "module": "sysPrxForUser",
+      "name": "_sys_strcpy"
+    },
+    {
+      "address": "0x01b9d958",
+      "nid": "0x9f04f7af",
+      "module": "sysPrxForUser",
+      "name": "_sys_printf"
+    },
+    {
+      "address": "0x01b9d978",
+      "nid": "0x9fb6228e",
+      "module": "sysPrxForUser",
+      "name": "0x9FB6228E"
+    },
+    {
+      "address": "0x01b9d998",
+      "nid": "0xaff080a4",
+      "module": "sysPrxForUser",
+      "name": "sys_ppu_thread_exit"
+    },
+    {
+      "address": "0x01b9d9b8",
+      "nid": "0xc3476d0c",
+      "module": "sysPrxForUser",
+      "name": "sys_lwmutex_destroy"
+    },
+    {
+      "address": "0x01b9d9d8",
+      "nid": "0xd3039d4d",
+      "module": "sysPrxForUser",
+      "name": "_sys_strncpy"
+    },
+    {
+      "address": "0x01b9d9f8",
+      "nid": "0xda0eb71a",
+      "module": "sysPrxForUser",
+      "name": "sys_lwcond_create"
+    },
+    {
+      "address": "0x01b9da18",
+      "nid": "0xdd0c1e09",
+      "module": "sysPrxForUser",
+      "name": "_sys_spu_printf_attach_group"
+    },
+    {
+      "address": "0x01b9da38",
+      "nid": "0xe0998dbf",
+      "module": "sysPrxForUser",
+      "name": "sys_prx_get_module_id_by_name"
+    },
+    {
+      "address": "0x01b9da58",
+      "nid": "0xe0da8efd",
+      "module": "sysPrxForUser",
+      "name": "sys_spu_image_close"
+    },
+    {
+      "address": "0x01b9da78",
+      "nid": "0xe75c40f2",
+      "module": "sysPrxForUser",
+      "name": "sys_process_get_paramsfo"
+    },
+    {
+      "address": "0x01b9da98",
+      "nid": "0xebe5f72f",
+      "module": "sysPrxForUser",
+      "name": "sys_spu_image_import"
+    },
+    {
+      "address": "0x01b9dab8",
+      "nid": "0xef87a695",
+      "module": "sysPrxForUser",
+      "name": "sys_lwcond_signal"
+    },
+    {
+      "address": "0x01b9dad8",
+      "nid": "0xfa7f693d",
+      "module": "sysPrxForUser",
+      "name": "_sys_vprintf"
+    },
+    {
+      "address": "0x01b9daf8",
+      "nid": "0xfb5db080",
+      "module": "sysPrxForUser",
+      "name": "_sys_memcmp"
+    },
+    {
+      "address": "0x01bcf71c",
+      "nid": "0x04e83d2c",
+      "module": "sysPrxForUser",
+      "name": "_sys_strncmp"
+    },
+    {
+      "address": "0x01bcf73c",
+      "nid": "0x1573dc3f",
+      "module": "sysPrxForUser",
+      "name": "sys_lwmutex_lock"
+    },
+    {
+      "address": "0x01bcf75c",
+      "nid": "0x1bc200f4",
+      "module": "sysPrxForUser",
+      "name": "sys_lwmutex_unlock"
+    },
+    {
+      "address": "0x01bcf77c",
+      "nid": "0x24a1ea07",
+      "module": "sysPrxForUser",
+      "name": "sys_ppu_thread_create"
+    },
+    {
+      "address": "0x01bcf79c",
+      "nid": "0x2d36462b",
+      "module": "sysPrxForUser",
+      "name": "_sys_strlen"
+    },
+    {
+      "address": "0x01bcf7bc",
+      "nid": "0x2f85c0ef",
+      "module": "sysPrxForUser",
+      "name": "sys_lwmutex_create"
+    },
+    {
+      "address": "0x01bcf7dc",
+      "nid": "0x350d454e",
+      "module": "sysPrxForUser",
+      "name": "sys_ppu_thread_get_id"
+    },
+    {
+      "address": "0x01bcf7fc",
+      "nid": "0x459b4393",
+      "module": "sysPrxForUser",
+      "name": "_sys_strcmp"
+    },
+    {
+      "address": "0x01bcf81c",
+      "nid": "0x68b9b011",
+      "module": "sysPrxForUser",
+      "name": "_sys_memset"
+    },
+    {
+      "address": "0x01bcf83c",
+      "nid": "0x6bf66ea7",
+      "module": "sysPrxForUser",
+      "name": "_sys_memcpy"
+    },
+    {
+      "address": "0x01bcf85c",
+      "nid": "0x99c88692",
+      "module": "sysPrxForUser",
+      "name": "_sys_strcpy"
+    },
+    {
+      "address": "0x01bcf87c",
+      "nid": "0xaff080a4",
+      "module": "sysPrxForUser",
+      "name": "sys_ppu_thread_exit"
+    },
+    {
+      "address": "0x01bcf89c",
+      "nid": "0xbdb18f83",
+      "module": "sysPrxForUser",
+      "name": "_sys_malloc"
+    },
+    {
+      "address": "0x01bcf8bc",
+      "nid": "0xc3476d0c",
+      "module": "sysPrxForUser",
+      "name": "sys_lwmutex_destroy"
+    },
+    {
+      "address": "0x01bcf8dc",
+      "nid": "0xf7f7fb20",
+      "module": "sysPrxForUser",
+      "name": "_sys_free"
+    },
+    {
+      "address": "0x01be5c88",
+      "nid": "0x05893e7c",
+      "module": "cellLibprof",
+      "name": "cellUserTraceRegister"
+    },
+    {
+      "address": "0x01be5ca8",
+      "nid": "0x6d045c2e",
+      "module": "cellLibprof",
+      "name": "cellUserTraceUnregister"
+    },
+    {
+      "address": "0x01be5cc8",
+      "nid": "0x350d454e",
+      "module": "sysPrxForUser",
+      "name": "sys_ppu_thread_get_id"
+    },
+    {
+      "address": "0x01be5ce8",
+      "nid": "0x68b9b011",
+      "module": "sysPrxForUser",
+      "name": "_sys_memset"
+    },
+    {
+      "address": "0x01be5d08",
+      "nid": "0x6bf66ea7",
+      "module": "sysPrxForUser",
+      "name": "_sys_memcpy"
+    },
+    {
+      "address": "0x01be5d28",
+      "nid": "0x9f04f7af",
+      "module": "sysPrxForUser",
+      "name": "_sys_printf"
+    },
+    {
+      "address": "0x01be5d48",
+      "nid": "0x9fb6228e",
+      "module": "sysPrxForUser",
+      "name": "0x9FB6228E"
+    },
+    {
+      "address": "0x01be5d68",
+      "nid": "0xd3039d4d",
+      "module": "sysPrxForUser",
+      "name": "_sys_strncpy"
+    },
+    {
+      "address": "0x01be5d88",
+      "nid": "0xe0998dbf",
+      "module": "sysPrxForUser",
+      "name": "sys_prx_get_module_id_by_name"
+    },
+    {
+      "address": "0x01c06764",
+      "nid": "0x1d2bca4b",
+      "module": "cellSpurs",
+      "name": "cellSpursSendWorkloadSignal"
+    },
+    {
+      "address": "0x01c06784",
+      "nid": "0x4a5eab63",
+      "module": "cellSpurs",
+      "name": "cellSpursWorkloadAttributeSetName"
+    },
+    {
+      "address": "0x01c067a4",
+      "nid": "0x57e4dec3",
+      "module": "cellSpurs",
+      "name": "cellSpursRemoveWorkload"
+    },
+    {
+      "address": "0x01c067c4",
+      "nid": "0x5fd43fe4",
+      "module": "cellSpurs",
+      "name": "cellSpursWaitForWorkloadShutdown"
+    },
+    {
+      "address": "0x01c067e4",
+      "nid": "0x7e4ea023",
+      "module": "cellSpurs",
+      "name": "cellSpursWakeUp"
+    },
+    {
+      "address": "0x01c06804",
+      "nid": "0x98d5b343",
+      "module": "cellSpurs",
+      "name": "cellSpursShutdownWorkload"
+    },
+    {
+      "address": "0x01c06824",
+      "nid": "0xc0158d8b",
+      "module": "cellSpurs",
+      "name": "cellSpursAddWorkloadWithAttribute"
+    },
+    {
+      "address": "0x01c06844",
+      "nid": "0xd2e23fa9",
+      "module": "cellSpurs",
+      "name": "cellSpursSetExceptionEventHandler"
+    },
+    {
+      "address": "0x01c06864",
+      "nid": "0xefeb2679",
+      "module": "cellSpurs",
+      "name": "_cellSpursWorkloadAttributeInitialize"
+    },
+    {
+      "address": "0x01c06884",
+      "nid": "0x5d9a7034",
+      "module": "cellFiber",
+      "name": "cellFiberPpuSelf"
+    },
+    {
+      "address": "0x01c068a4",
+      "nid": "0x6c164b3b",
+      "module": "cellFiber",
+      "name": "cellFiberPpuWaitSignal"
+    },
+    {
+      "address": "0x01c068c4",
+      "nid": "0x04e83d2c",
+      "module": "sysPrxForUser",
+      "name": "_sys_strncmp"
+    },
+    {
+      "address": "0x01c068e4",
+      "nid": "0x06574237",
+      "module": "sysPrxForUser",
+      "name": "_sys_snprintf"
+    },
+    {
+      "address": "0x01c06904",
+      "nid": "0x1c9a942c",
+      "module": "sysPrxForUser",
+      "name": "sys_lwcond_destroy"
+    },
+    {
+      "address": "0x01c06924",
+      "nid": "0x2f85c0ef",
+      "module": "sysPrxForUser",
+      "name": "sys_lwmutex_create"
+    },
+    {
+      "address": "0x01c06944",
+      "nid": "0x68b9b011",
+      "module": "sysPrxForUser",
+      "name": "_sys_memset"
+    },
+    {
+      "address": "0x01c06964",
+      "nid": "0x9f04f7af",
+      "module": "sysPrxForUser",
+      "name": "_sys_printf"
+    },
+    {
+      "address": "0x01c06984",
+      "nid": "0x9fb6228e",
+      "module": "sysPrxForUser",
+      "name": "0x9FB6228E"
+    },
+    {
+      "address": "0x01c069a4",
+      "nid": "0xc3476d0c",
+      "module": "sysPrxForUser",
+      "name": "sys_lwmutex_destroy"
+    },
+    {
+      "address": "0x01c069c4",
+      "nid": "0xda0eb71a",
+      "module": "sysPrxForUser",
+      "name": "sys_lwcond_create"
+    },
+    {
+      "address": "0x01c069e4",
+      "nid": "0xe75c40f2",
+      "module": "sysPrxForUser",
+      "name": "sys_process_get_paramsfo"
+    },
+    {
+      "address": "0x01c3ef58",
+      "nid": "0x04e83d2c",
+      "module": "sysPrxForUser",
+      "name": "_sys_strncmp"
+    },
+    {
+      "address": "0x01c3ef78",
+      "nid": "0x052d29a6",
+      "module": "sysPrxForUser",
+      "name": "_sys_strcat"
+    },
+    {
+      "address": "0x01c3ef98",
+      "nid": "0x06574237",
+      "module": "sysPrxForUser",
+      "name": "_sys_snprintf"
+    },
+    {
+      "address": "0x01c3efb8",
+      "nid": "0x24a1ea07",
+      "module": "sysPrxForUser",
+      "name": "sys_ppu_thread_create"
+    },
+    {
+      "address": "0x01c3efd8",
+      "nid": "0x27427742",
+      "module": "sysPrxForUser",
+      "name": "_sys_memmove"
+    },
+    {
+      "address": "0x01c3eff8",
+      "nid": "0x2d36462b",
+      "module": "sysPrxForUser",
+      "name": "_sys_strlen"
+    },
+    {
+      "address": "0x01c3f018",
+      "nid": "0x350d454e",
+      "module": "sysPrxForUser",
+      "name": "sys_ppu_thread_get_id"
+    },
+    {
+      "address": "0x01c3f038",
+      "nid": "0x3dd4a957",
+      "module": "sysPrxForUser",
+      "name": "sys_ppu_thread_register_atexit"
+    },
+    {
+      "address": "0x01c3f058",
+      "nid": "0x459b4393",
+      "module": "sysPrxForUser",
+      "name": "_sys_strcmp"
+    },
+    {
+      "address": "0x01c3f078",
+      "nid": "0x68b9b011",
+      "module": "sysPrxForUser",
+      "name": "_sys_memset"
+    },
+    {
+      "address": "0x01c3f098",
+      "nid": "0x6bf66ea7",
+      "module": "sysPrxForUser",
+      "name": "_sys_memcpy"
+    },
+    {
+      "address": "0x01c3f0b8",
+      "nid": "0x7498887b",
+      "module": "sysPrxForUser",
+      "name": "_sys_strchr"
+    },
+    {
+      "address": "0x01c3f0d8",
+      "nid": "0x8461e528",
+      "module": "sysPrxForUser",
+      "name": "sys_time_get_system_time"
+    },
+    {
+      "address": "0x01c3f0f8",
+      "nid": "0x99c88692",
+      "module": "sysPrxForUser",
+      "name": "_sys_strcpy"
+    },
+    {
+      "address": "0x01c3f118",
+      "nid": "0x9f04f7af",
+      "module": "sysPrxForUser",
+      "name": "_sys_printf"
+    },
+    {
+      "address": "0x01c3f138",
+      "nid": "0xac6fc404",
+      "module": "sysPrxForUser",
+      "name": "sys_ppu_thread_unregister_atexit"
+    },
+    {
+      "address": "0x01c3f158",
+      "nid": "0xaff080a4",
+      "module": "sysPrxForUser",
+      "name": "sys_ppu_thread_exit"
+    },
+    {
+      "address": "0x01c3f178",
+      "nid": "0xd3039d4d",
+      "module": "sysPrxForUser",
+      "name": "_sys_strncpy"
+    },
+    {
+      "address": "0x01c3f198",
+      "nid": "0xfb5db080",
+      "module": "sysPrxForUser",
+      "name": "_sys_memcmp"
+    },
+    {
+      "address": "0x01c6a44c",
+      "nid": "0x055bd74d",
+      "module": "cellGcmSys",
+      "name": "cellGcmGetTiledPitchSize"
+    },
+    {
+      "address": "0x01c6a46c",
+      "nid": "0x0b4b62d5",
+      "module": "cellGcmSys",
+      "name": "cellGcmSetPrepareFlip"
+    },
+    {
+      "address": "0x01c6a48c",
+      "nid": "0x21397818",
+      "module": "cellGcmSys",
+      "name": "_cellGcmSetFlipCommand"
+    },
+    {
+      "address": "0x01c6a4ac",
+      "nid": "0x21ac3697",
+      "module": "cellGcmSys",
+      "name": "cellGcmAddressToOffset"
+    },
+    {
+      "address": "0x01c6a4cc",
+      "nid": "0x23ae55a3",
+      "module": "cellGcmSys",
+      "name": "cellGcmGetLastSecondVTime"
+    },
+    {
+      "address": "0x01c6a4ec",
+      "nid": "0x4ae8d215",
+      "module": "cellGcmSys",
+      "name": "cellGcmSetFlipMode"
+    },
+    {
+      "address": "0x01c6a50c",
+      "nid": "0x4d7ce993",
+      "module": "cellGcmSys",
+      "name": "cellGcmSetSecondVFrequency"
+    },
+    {
+      "address": "0x01c6a52c",
+      "nid": "0x63387071",
+      "module": "cellGcmSys",
+      "name": "cellGcmGetLastFlipTime"
+    },
+    {
+      "address": "0x01c6a54c",
+      "nid": "0x72a577ce",
+      "module": "cellGcmSys",
+      "name": "cellGcmGetFlipStatus"
+    },
+    {
+      "address": "0x01c6a56c",
+      "nid": "0xa41ef7e8",
+      "module": "cellGcmSys",
+      "name": "cellGcmSetFlipHandler"
+    },
+    {
+      "address": "0x01c6a58c",
+      "nid": "0xa53d12ae",
+      "module": "cellGcmSys",
+      "name": "cellGcmSetDisplayBuffer"
+    },
+    {
+      "address": "0x01c6a5ac",
+      "nid": "0xa91b0402",
+      "module": "cellGcmSys",
+      "name": "cellGcmSetVBlankHandler"
+    },
+    {
+      "address": "0x01c6a5cc",
+      "nid": "0xacee8542",
+      "module": "cellGcmSys",
+      "name": "cellGcmSetFlipImmediate"
+    },
+    {
+      "address": "0x01c6a5ec",
+      "nid": "0xb2e761d4",
+      "module": "cellGcmSys",
+      "name": "cellGcmResetFlipStatus"
+    },
+    {
+      "address": "0x01c6a60c",
+      "nid": "0xdc494430",
+      "module": "cellGcmSys",
+      "name": "cellGcmSetSecondVHandler"
+    },
+    {
+      "address": "0x01c6a62c",
+      "nid": "0xf80196c1",
+      "module": "cellGcmSys",
+      "name": "cellGcmGetLabelAddress"
+    },
+    {
+      "address": "0x01c6a64c",
+      "nid": "0x0bae8772",
+      "module": "cellSysutil",
+      "name": "cellVideoOutConfigure"
+    },
+    {
+      "address": "0x01c6a66c",
+      "nid": "0x1573dc3f",
+      "module": "sysPrxForUser",
+      "name": "sys_lwmutex_lock"
+    },
+    {
+      "address": "0x01c6a68c",
+      "nid": "0x1bc200f4",
+      "module": "sysPrxForUser",
+      "name": "sys_lwmutex_unlock"
+    },
+    {
+      "address": "0x01c6a6ac",
+      "nid": "0x24a1ea07",
+      "module": "sysPrxForUser",
+      "name": "sys_ppu_thread_create"
+    },
+    {
+      "address": "0x01c6a6cc",
+      "nid": "0x2f85c0ef",
+      "module": "sysPrxForUser",
+      "name": "sys_lwmutex_create"
+    },
+    {
+      "address": "0x01c6a6ec",
+      "nid": "0x68b9b011",
+      "module": "sysPrxForUser",
+      "name": "_sys_memset"
+    },
+    {
+      "address": "0x01c6a70c",
+      "nid": "0x6bf66ea7",
+      "module": "sysPrxForUser",
+      "name": "_sys_memcpy"
+    },
+    {
+      "address": "0x01c6a72c",
+      "nid": "0x9f04f7af",
+      "module": "sysPrxForUser",
+      "name": "_sys_printf"
+    },
+    {
+      "address": "0x01c6a74c",
+      "nid": "0xaff080a4",
+      "module": "sysPrxForUser",
+      "name": "sys_ppu_thread_exit"
+    },
+    {
+      "address": "0x01c6a76c",
+      "nid": "0xc3476d0c",
+      "module": "sysPrxForUser",
+      "name": "sys_lwmutex_destroy"
+    }
+  ]
+}
