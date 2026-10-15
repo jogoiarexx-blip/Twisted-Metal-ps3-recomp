@@ -1,6 +1,7 @@
 #include <algorithm>
 #include "runtime.hpp"
 #include "import_dispatch.hpp"
+#include "lv2_memory.hpp"
 #include <fstream>
 #include <iostream>
 #include <iterator>
@@ -57,6 +58,24 @@ int main(int argc,char**argv) {
   next=startup_00354de0(cpu,mem);
   if(next!=0x4ec8d0 || cpu.lr!=0x354e58)throw std::runtime_error("Third block state mismatch");
   std::cout<<"Third block 0x354de0 -> call 0x"<<next<<"; LR 0x"<<cpu.lr<<"\n";
-  std::cout<<"STOP: target 0x4ec8d0 is not recompiled. Game does not boot.\n";
+  auto sc=startup_004ec8d0(cpu,mem);
+  if(sc!=0x4ec8ec || cpu.r[11]!=0x160 || cpu.r[3]!=0x17dfc48 || cpu.r[1]!=0x1fffe80 || mem.load64(cpu.r[1])!=0x1fffef0 || mem.load64(cpu.r[1]+128)!=0x354e58) throw std::runtime_error("Fourth block state mismatch");
+  std::cout<<"Memory setup 0x4ec8d0 -> LV2 syscall 0x"<<cpu.r[11]<<" at PC 0x"<<sc<<"; arg 0x"<<cpu.r[3]<<"\n";
+  Lv2Memory lv2;
+  if (lv2.dispatch(cpu,mem)!=Lv2Memory::ok || mem.load32(0x17dfc48)!=lv2.total() ||
+      mem.load32(0x17dfc4c)!=lv2.available())
+    throw std::runtime_error("LV2 0x160 failed to fill guest memory-info");
+  std::cout<<"LV2 0x160: total 0x"<<mem.load32(0x17dfc48)<<" available 0x"<<mem.load32(0x17dfc4c)<<"\n";
+  sc=startup_after_004ec8ec(cpu,mem);
+  if (sc!=0x4ec908 || cpu.r[11]!=0x15c)throw std::runtime_error("LV2 allocation call state mismatch");
+  if (lv2.dispatch(cpu,mem)!=Lv2Memory::ok || mem.load32(0x17dfc40)!=Lv2Memory::alloc_base)
+    throw std::runtime_error("LV2 0x15c allocation failed");
+  if(lv2.available()!=lv2.total()-0x00f00000)
+    throw std::runtime_error("LV2 memory quota mismatch");
+  std::cout<<"LV2 0x15c: allocated guest 0x"<<mem.load32(0x17dfc40)<<" (0xF00000 bytes, 1MB pages)\n";
+  next=startup_after_004ec908(cpu,mem);
+  if (next!=0x98c8c0 || cpu.r[3]!=Lv2Memory::alloc_base || cpu.r[4]!=0xf00000 || cpu.lr!=0x4ec92c)
+    throw std::runtime_error("Helper 0x98c8c0 call state mismatch");
+  std::cout<<"NEXT: helper 0x"<<next<<" (NOT recompiled). No menu or gameplay yet.\n";
  }catch(const std::exception&e){std::cerr<<e.what()<<"\n";return 1;}
 }
