@@ -35,7 +35,12 @@ jobs:
           g++ -std=c++17 -O2 -Wall -Wextra -Werror spurs_hle_test.cpp -o /tmp/spurs_hle_test
           /tmp/spurs_hle_test
 
+      - name: Build and run heap initialization tests
+        run: |
+          g++ -std=c++17 -O2 -Wall -Wextra -Werror heap_init.cpp heap_init_test.cpp -o /tmp/heap_init_test
+          /tmp/heap_init_test
+
       - name: Compile boot harness
         run: |
-          g++ -std=c++17 -O2 -Wall -Wextra -Werror entry.cpp startup2.cpp startup3.cpp startup4.cpp boot_probe.cpp -o /tmp/boot_probe
+          g++ -std=c++17 -O2 -Wall -Wextra -Werror entry.cpp startup2.cpp startup3.cpp startup4.cpp heap_init.cpp boot_probe.cpp -o /tmp/boot_probe
           # Requires the user's own EBOOT.elf for execution; CI only compiles.
