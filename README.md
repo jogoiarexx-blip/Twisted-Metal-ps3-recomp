@@ -1,4 +1,4 @@
-> **Atualização v0.14 (LV2 Memory HLE):** testes locais avançaram até `0x98C8C0`, com implementações parciais dos syscalls de memória `0x160` e `0x15C`. Veja [notas técnicas da v0.14](EVOLUCAO-v0.14-LV2-MEMORY.md). **O repositório ainda contém os fontes anteriores; a sincronização integral do código v0.14 está pendente. O port não é jogável.**
+> **v0.14 publicada — LV2 Memory HLE:** os arquivos de código C++ para alocação de memória guest, boot probe até `0x98C8C0`, testes e scripts de compilação foram sincronizados com a branch `main`. A validação de execução ocorreu localmente com o EBOOT 1.06 e **não equivale a um jogo jogável ou aumento comprovado de FPS**. Veja [evolução técnica](EVOLUCAO-v0.14-LV2-MEMORY.md) e [comandos de teste](recomp/README.md).
 
 > **v0.11:** novo [CROSSFEED-v0.11-SPURS.md](CROSSFEED-v0.11-SPURS.md), com dois NIDs SPURS de pós-FX ligados ao dispatcher e testes de memória big-endian. **Ainda não inicializa o jogo.**
 
