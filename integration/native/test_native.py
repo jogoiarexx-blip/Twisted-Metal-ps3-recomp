@@ -4,6 +4,7 @@ import unittest
 from pathlib import Path
 from doctor import inspect, DISC_100_SHA256, UPSTREAM_FILES, RUNTIME_FILES, file_digest
 from build_windows import build_commands
+from doctor import missing_spurs_job_symbols
 
 class NativePortTests(unittest.TestCase):
     def make_tree(self, root):
@@ -47,6 +48,25 @@ class NativePortTests(unittest.TestCase):
             out = inspect(up, rt, is_windows=True, command=lambda _: "/fake")
             self.assertTrue(any("PPU gerado" in e for e in out["errors"]))
             self.assertTrue(any("Runtime não compilado" in e for e in out["errors"]))
+
+
+    def test_spurs_job_symbols_missing_and_resolved(self):
+        with tempfile.TemporaryDirectory() as folder:
+            up, _ = self.make_tree(Path(folder))
+            registry = up / "src/gen/spu_jobs.c"
+            registry.write_text(
+                "extern void job_TEST_spu_func_00000000(spu_context*);\n"
+                "extern void job_TEST_spu_recomp_register(void);\n",
+                encoding="utf-8")
+            missing = missing_spurs_job_symbols(up)
+            self.assertEqual(set(missing), {
+                "job_TEST_spu_func_00000000", "job_TEST_spu_recomp_register"})
+            source = up / "src/spu_gen/job/spu_recomp.c"
+            source.write_text(
+                "void job_TEST_spu_func_00000000() {}\n"
+                "void job_TEST_spu_recomp_register() {}\n",
+                encoding="utf-8")
+            self.assertEqual(missing_spurs_job_symbols(up), [])
 
     def test_cmake_uses_explicit_runtime(self):
         cmds = build_commands("workspace/twistedmetal", "workspace/ps3recomp", "workspace/build")
