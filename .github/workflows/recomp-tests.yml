@@ -44,3 +44,17 @@ jobs:
         run: |
           g++ -std=c++17 -O2 -Wall -Wextra -Werror entry.cpp startup2.cpp startup3.cpp startup4.cpp heap_init.cpp boot_probe.cpp -o /tmp/boot_probe
           # Requires the user's own EBOOT.elf for execution; CI only compiles.
+
+      - name: Test MIT-licensed inflater candidate (synthetic only)
+        run: |
+          g++ -std=c++17 -O2 -Wall -Wextra -Werror ../integration/upstream/tm_inflate.cpp ../integration/upstream/tm_inflate_test.cpp -o /tmp/tm_inflate_test
+          /tmp/tm_inflate_test
+
+      - name: Test FranklinCG SPURS Taskset layout (synthetic only)
+        run: |
+          gcc -std=c11 -O2 -Wall -Wextra -Werror ../integration/upstream/franklin_taskset_probe.c -o /tmp/tm_taskset_probe
+          /tmp/tm_taskset_probe
+
+      - name: Check EBOOT target identity gate (no game files)
+        run: |
+          python3 -m unittest discover -s ../integration/upstream -p 'test_*.py' -v
