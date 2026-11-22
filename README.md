@@ -1,17 +1,23 @@
+> **v0.19 — Heap completo e retorno ao motor (0x354E58):** conclusão de toda a inicialização do alocador guest da engine TMX, registro de free-list circular em `0x988314`, HLE de `sys_lwmutex_create` (0x00C8CE64), gravação do descritor em `0x017DFC44` e retorno ao fluxo principal em `0x00354E58`. Executável direto para Windows: [`RODAR-BOOT-PROBE.cmd`](RODAR-BOOT-PROBE.cmd). Veja [evolução técnica v0.19](EVOLUCAO-v0.19-HEAP-COMPLETO.md).
+> 
+> **v0.18 — Decompilação do helper de arena PPU (0x988AA8):** decodificadas as 25 instruções PPC de alinhamento e tagging da arena do heap, com hash SHA-256 fixado. Veja [evolução técnica v0.18](EVOLUCAO-v0.18-ARENA-INIT.md).
+> 
 > **v0.18 — SPURS JobQueue com validação de dumps locais:** incorporado pipeline de verificação FNV/tamanho e lifting dos 15 módulos JobQueue, com manifesto e checagem do código gerado. Veja [instruções](integration/native/JOBQUEUE-v018.md). **Sem build nativo jogável comprovado: ainda falta a primeira captura real dos jobs.**
-
+> 
+> **Crossfeed upstream (sp00nznet + FranklinCG integrado):** incorporadas ferramentas de pipeline (`unpsarc.py`, `recarve_spu.py`, `symbolize.py`, `seed_gaps.py`, `post_lift.py`), HLE do agendador FIOS (`sys_ppu_thread_once` NID `0xA3E3BE68`), `sys_prx_register_library`, mapeamento RSX GCM e contratos de Taskset SPURS. Veja [CROSSFEED-UPSTREAMS.md](CROSSFEED-UPSTREAMS.md).
+> 
 > **v0.17 — PPU/SPU com pipeline local:** nova ferramenta para levantar o PPU e os SPUs embutidos do EBOOT 1.00, com validação de hash e diagnóstico dos 15 módulos JobQueue não incluídos no EBOOT. [Tutorial e limitações](integration/native/LIFT-PPU-SPU-v017.md). **Ainda não existe binário jogável gerado neste repositório.**
-
+> 
 > **v0.16 — preparação de build Windows (disco 1.00):** pré-requisitos e compilação segura do upstream em [integration/native/README.md](integration/native/README.md). A experiência v0.15 com ELF 1.06 foi preservada; **não há versão jogável publicada**. Testes da CI usam arquivos sintéticos.
-
+> 
 > **Crossfeed experimental (sp00nznet + FranklinCG):** adicionados testes sintéticos de descompressão, Taskset/SPURS e proteção para distinguir os ELFs 1.00 e 1.06. São componentes isolados, **não um jogo jogável**. Veja [integração e próximos marcos](integration/upstream/README.md) e [licenças/atribuição](integration/upstream/NOTICES.md).
-
+> 
 > **v0.15 publicada — inicialização do heap:** o boot probe validado com o EBOOT 1.06 agora avança até a chamada `0x988AA8`, mantendo essa chamada como pendência explícita. Código, verificadores e testes de heap estão no diretório [`recomp/`](recomp/). Veja [notas técnicas v0.15](EVOLUCAO-v0.15-HEAP-INIT.md). **Ainda não há jogo nativo jogável ou ganho de FPS comprovado.**
-
+> 
 > **v0.14 publicada — LV2 Memory HLE:** os arquivos de código C++ para alocação de memória guest, boot probe até `0x98C8C0`, testes e scripts de compilação foram sincronizados com a branch `main`. A validação de execução ocorreu localmente com o EBOOT 1.06 e **não equivale a um jogo jogável ou aumento comprovado de FPS**. Veja [evolução técnica](EVOLUCAO-v0.14-LV2-MEMORY.md) e [comandos de teste](recomp/README.md).
-
+> 
 > **v0.11:** novo [CROSSFEED-v0.11-SPURS.md](CROSSFEED-v0.11-SPURS.md), com dois NIDs SPURS de pós-FX ligados ao dispatcher e testes de memória big-endian. **Ainda não inicializa o jogo.**
-
+> 
 > **v0.9:** veja [EVOLUCAO-v0.9.md](EVOLUCAO-v0.9.md) para o novo bloco PPU, testes e limitações.
 
 # Twisted Metal (BCUS98106) — análise dos executáveis
