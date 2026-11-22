@@ -1,3 +1,5 @@
+> **v0.18 — SPURS JobQueue com validação de dumps locais:** incorporado pipeline de verificação FNV/tamanho e lifting dos 15 módulos JobQueue, com manifesto e checagem do código gerado. Veja [instruções](integration/native/JOBQUEUE-v018.md). **Sem build nativo jogável comprovado: ainda falta a primeira captura real dos jobs.**
+
 > **v0.17 — PPU/SPU com pipeline local:** nova ferramenta para levantar o PPU e os SPUs embutidos do EBOOT 1.00, com validação de hash e diagnóstico dos 15 módulos JobQueue não incluídos no EBOOT. [Tutorial e limitações](integration/native/LIFT-PPU-SPU-v017.md). **Ainda não existe binário jogável gerado neste repositório.**
 
 > **v0.16 — preparação de build Windows (disco 1.00):** pré-requisitos e compilação segura do upstream em [integration/native/README.md](integration/native/README.md). A experiência v0.15 com ELF 1.06 foi preservada; **não há versão jogável publicada**. Testes da CI usam arquivos sintéticos.
