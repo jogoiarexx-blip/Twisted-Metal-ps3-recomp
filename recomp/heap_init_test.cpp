@@ -42,6 +42,22 @@ try {
   next=heap_after_00988b0c(cpu,mem);
   check(next==0x988aa8 && cpu.lr==0x98c9c8,"next memory helper boundary");
   check(cpu.r[3]==0x40000010 && cpu.r[4]==0x400001f8 && cpu.r[5]==0xeffdd8,"next helper ABI");
+  // Test helper 0x988aa8 execution and memory tagging
+  next=heap_helper_00988aa8(cpu,mem);
+  check(next==0x98c9c8,"helper 0x988aa8 return");
+  check(mem.load32(0x40000010+12)==0xeffdd8,"size adjusted in descriptor");
+  check(mem.load32(0x40000010+24)==0x400001f8,"arena start in descriptor");
+  check(mem.load32(0x40000010+28)==0xfffff,"heap mask in descriptor");
+  check(mem.load32(0x400001f8+4)==0xeffdd9,"arena head block tag (odd=busy/guard)");
+  check(mem.load32(0x40efffd0+4)==0x40000228,"arena end block link");
+  next=heap_after_00988aa8(cpu,mem);
+  check(next==0x988314 && cpu.lr==0x98c9d4,"boundary to next helper 0x988314");
+  check(cpu.r[3]==0x40000010 && cpu.r[4]==0x400001f8,"helper 0x988314 arguments");
+  // Verify unaligned arena padding branch in 0x988aa8
+  Cpu unaligned; unaligned.r[1]=0x1fffe80; unaligned.r[2]=0xf31ac0;
+  unaligned.r[3]=0x40000010; unaligned.r[4]=0x400001f4; unaligned.r[5]=0xeffdd0; unaligned.lr=0x98c9c8;
+  check(heap_helper_00988aa8(unaligned,mem)==0x98c9c8,"unaligned helper return");
+  check(mem.load32(0x40000010+24)==0x400001f8,"unaligned arena start aligned to 16 bytes");
   // Verify the helper's preinitialised global is left untouched on later calls.
   cpu.lr=0xdeadbeef;cpu.r[1]=0x1fffe80;
   mem.store32(0x1a69fc0+4,0x222000);

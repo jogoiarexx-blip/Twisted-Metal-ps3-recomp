@@ -9,6 +9,7 @@ EXPECTED_ELF = '41a8aae28f111aab6b2ab4fff661920ae191720ea473e3c340266050d7a4b99d
 REGIONS = (
     (0x98c8c0, 0x98c954, 'd0eff769e237e0ab4936226ba7a75ab6655195cc9d6cac35dd7f728f7aa3ca98'),
     (0x988b78, 0x988be8, 'ef9fa0567ab2b10124194a11d6428be21879f9fb064a934e97e85592ff859b49'),
+    (0x988aa8, 0x988b0c, '10f77ca3f68f5dafadcff8226808ebb862914b3ddd0a94d244cd5666bd1646c8'),
 )
 def verify(path):
     content = Path(path).read_bytes()

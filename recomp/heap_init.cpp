@@ -156,7 +156,7 @@ uint64_t heap_list_heads_00988b0c(Cpu& cpu,Memory& mem) {
   }
   return cpu.lr;
 }
-// Resume after the list-head helper. 0x988aa8 is the next unresolved helper.
+// Resume after the list-head helper. 0x988aa8 is the next helper.
 uint64_t heap_after_00988b0c(Cpu& cpu, Memory& mem) {
   if (cpu.lr != 0x98c990) throw std::runtime_error("Unexpected list-head helper return");
   cpu.r[0]=560;
@@ -172,5 +172,47 @@ uint64_t heap_after_00988b0c(Cpu& cpu, Memory& mem) {
   cpu.r[5]=static_cast<uint32_t>(cpu.r[5]-48);
   cpu.lr=0x98c9c8;
   return 0x988aa8;
+}
+// 0x988aa8: Sets up arena block header and tags for the allocator descriptor.
+uint64_t heap_helper_00988aa8(Cpu& cpu, Memory& mem) {
+  uint64_t r0 = cpu.r[4] + 8;
+  uint64_t r9 = cpu.r[5];
+  const uint32_t low = static_cast<uint32_t>(r0) & 0xf;
+  r0 = low;
+  uint64_t r5 = 0;
+  uint32_t padding = 0;
+  if (low != 0) {
+    const uint32_t sub = 16 - low;
+    r5 = sub & 0xf;
+    padding = static_cast<uint32_t>(r5);
+  }
+  r0 = cpu.r[4] + padding;
+  const uint64_t global = static_cast<uint64_t>(mem.load32(at_toc(cpu, 0x551c)));
+  cpu.r[8] = global;
+  r9 = static_cast<uint32_t>(r9 - r5);
+  const uint64_t r11 = static_cast<uint32_t>(r0);
+  mem.store32(cpu.r[3] + 12, static_cast<uint32_t>(r9));
+  const uint32_t r10 = static_cast<uint32_t>(r9 | 1);
+  r9 = static_cast<uint32_t>(r0 + r9);
+  mem.store32(cpu.r[3] + 24, static_cast<uint32_t>(r0));
+  r0 += 48;
+  mem.store32(r11 + 4, r10);
+  mem.store32(r9 + 4, static_cast<uint32_t>(r0));
+  const uint32_t field16 = mem.load32(global + 16);
+  cpu.r[11] = field16;
+  mem.store32(cpu.r[3] + 28, field16);
+  cpu.r[0] = r0;
+  cpu.r[5] = r5;
+  cpu.r[9] = r9;
+  cpu.r[10] = r10;
+  return cpu.lr; // Expected 0x98c9c8
+}
+// Resume after 0x988aa8: call next helper 0x988314.
+uint64_t heap_after_00988aa8(Cpu& cpu, Memory& mem) {
+  if (cpu.lr != 0x98c9c8) throw std::runtime_error("Unexpected helper 0x988aa8 return");
+  cpu.r[4] = mem.load32(cpu.r[31] + 24);
+  cpu.r[3] = cpu.r[31];
+  cpu.lr = 0x98c9d4;
+  return 0x988314;
 }
 }

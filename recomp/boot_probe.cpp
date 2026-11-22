@@ -94,6 +94,11 @@ int main(int argc,char**argv) {
   if (next!=0x98c990)throw std::runtime_error("List-head initialization failed");
   next=heap_after_00988b0c(cpu,mem);
   if (next!=0x988aa8 || cpu.lr!=0x98c9c8)throw std::runtime_error("Heap continuation mismatch");
-  std::cout<<"NEXT: helper 0x"<<next<<" (NOT recompiled). No menu or gameplay yet.\n";
+  next=heap_helper_00988aa8(cpu,mem);
+  if (next!=0x98c9c8)throw std::runtime_error("Arena tagging helper 0x988aa8 failed");
+  std::cout<<"Arena block header initialized and tagged; helper 0x988aa8 returned\n";
+  next=heap_after_00988aa8(cpu,mem);
+  if (next!=0x988314 || cpu.lr!=0x98c9d4)throw std::runtime_error("Helper 0x988314 boundary mismatch");
+  std::cout<<"NEXT: helper 0x"<<std::hex<<next<<" (free-list node insertion, NOT recompiled). No menu or gameplay yet.\n";
  }catch(const std::exception&e){std::cerr<<e.what()<<"\n";return 1;}
 }

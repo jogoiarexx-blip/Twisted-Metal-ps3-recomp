@@ -86,4 +86,6 @@ uint64_t heap_memset_0098769c(Cpu&,Memory&);
 uint64_t heap_after_0098769c(Cpu&,Memory&);
 uint64_t heap_list_heads_00988b0c(Cpu&,Memory&);
 uint64_t heap_after_00988b0c(Cpu&,Memory&);
+uint64_t heap_helper_00988aa8(Cpu&,Memory&);
+uint64_t heap_after_00988aa8(Cpu&,Memory&);
 }
