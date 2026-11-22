@@ -33,3 +33,11 @@ USRDIR/
 Thumbs.db
 .vscode/
 .idea/
+
+# Não publicar workspaces / assets originais
+/external/
+/integration/native/work/
+/integration/native/build/
+/integration/native/logs/
+*.ELF
+*.BIN
