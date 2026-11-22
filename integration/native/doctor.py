@@ -4,6 +4,7 @@ import argparse
 import hashlib
 import json
 import os
+import re
 from pathlib import Path
 import shutil
 
@@ -25,6 +26,24 @@ def file_digest(path):
         for chunk in iter(lambda: stream.read(1048576), b""):
             h.update(chunk)
     return h.hexdigest()
+
+def missing_spurs_job_symbols(upstream):
+    """Busca símbolos de JobQueue que não são cobertos pelos SPUs embutidos."""
+    root = Path(upstream)
+    registry = root / "src/gen/spu_jobs.c"
+    if not registry.is_file():
+        return []
+    wanted = set(re.findall(
+        r"extern\s+void\s+(job_[A-Za-z0-9_]+)\s*\(",
+        registry.read_text(encoding="utf-8", errors="replace")))
+    if not wanted:
+        return []
+    found = set()
+    for path in (root / "src/spu_gen").rglob("*.c"):
+        source = path.read_text(encoding="utf-8", errors="replace")
+        found.update(name for name in wanted if name + "(" in source)
+    return sorted(wanted - found)
+
 
 def inspect(upstream, runtime, eboot=None, *, is_windows=None, command=None):
     """Somente verifica; não altera arquivos e não executa processos."""
@@ -61,6 +80,13 @@ def inspect(upstream, runtime, eboot=None, *, is_windows=None, command=None):
         failures.append("Cabeçalho PPU ausente: src/recomp/ppu_recomp.h")
     if not spu:
         failures.append("SPU gerado ausente: src/spu_gen/**/*.c (gerar localmente)")
+    missing_jobs = missing_spurs_job_symbols(upstream)
+    if missing_jobs:
+        failures.append(
+            "Módulos JobQueue SPURS faltantes: " + str(len(missing_jobs)) +
+            " símbolo(s), por exemplo " + ", ".join(missing_jobs[:3]))
+    if not (upstream / "src/gen/spu_jobs.c").is_file():
+        failures.append("Registro de JobQueue SPURS ausente: src/gen/spu_jobs.c")
     version = "not-provided"
     if eboot is None:
         failures.append("Informe --eboot com EBOOT.ELF original do disco 1.00")
@@ -82,7 +108,7 @@ def inspect(upstream, runtime, eboot=None, *, is_windows=None, command=None):
     return {"ready": not failures, "target": "BCUS98106-disc-1.00",
             "upstream": str(upstream), "runtime": str(runtime),
             "eboot_version": version, "generated_ppu_files": len(ppu),
-            "generated_spu_files": len(spu), "errors": failures, "warnings": warnings}
+            "generated_spu_files": len(spu), "missing_job_symbols": missing_jobs, "errors": failures, "warnings": warnings}
 
 def main(argv=None):
     p = argparse.ArgumentParser(description=__doc__)
