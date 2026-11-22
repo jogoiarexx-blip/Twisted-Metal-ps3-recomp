@@ -1,3 +1,5 @@
+> **v0.18:** comandos para verificar e levantar os 15 jobs SPURS a partir de dumps locais, sem gerar funções fictícias: [JOBQUEUE-v018.md](JOBQUEUE-v018.md). A primeira compilação/captura ainda precisa ser reproduzida no Windows.
+
 # v0.16 — Compilação nativa Windows (alvo PS3 1.00)
 
 Esta etapa cria uma ponte **independente** para [sp00nznet/twistedmetal](https://github.com/sp00nznet/twistedmetal); não substitui o boot probe v0.15 do nosso ELF candidato 1.06. Os endereços e TOCs são diferentes. O [FranklinCG](https://github.com/franklincg/twisted-metal-2012-ps3-native-port) fornece testes de estruturas e não um jogo recompilado.
