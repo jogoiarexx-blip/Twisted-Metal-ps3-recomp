@@ -5,6 +5,7 @@ import unittest
 from pathlib import Path
 from types import SimpleNamespace
 
+from doctor import validate_jobqueue_manifest
 from prepare_jobqueue import (
     fnv1a64, expected_jobs, inspect_dumps, lift_commands,
     generate, verify_generated_source, MAX_LOCAL_STORE,
@@ -105,12 +106,17 @@ class JobqueueTests(unittest.TestCase):
                 return SimpleNamespace(returncode=0)
             manifest = generate(upstream, runtime, report, runner=fake_runner)
             self.assertTrue(manifest.is_file())
+            self.assertEqual(validate_jobqueue_manifest(upstream), [])
             self.assertEqual(len(invocations), 30)
             for fp in report["matched"]:
                 source = upstream / "src/spu_gen" / ("job_" + fp) / "spu_recomp.c"
                 self.assertTrue(verify_generated_source(source, fp))
                 self.assertIn('#include "spu_helpers.h"', source.read_text())
                 self.assertNotIn("../../runtime/", source.read_text())
+            first_fp = sorted(report["matched"])[0]
+            changed = upstream / "src/spu_gen" / ("job_" + first_fp) / "spu_recomp.c"
+            changed.write_text(changed.read_text() + "\n/* changed */", encoding="utf-8")
+            self.assertTrue(any("alterado" in x for x in validate_jobqueue_manifest(upstream)))
             with self.assertRaisesRegex(ValueError, "--overwrite"):
                 generate(upstream, runtime, report, runner=fake_runner)
 
