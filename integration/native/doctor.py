@@ -28,7 +28,7 @@ def file_digest(path):
     return h.hexdigest()
 
 def missing_spurs_job_symbols(upstream):
-    """Busca símbolos de JobQueue que não são cobertos pelos SPUs embutidos."""
+    """Conta definições reais presentes em fontes SPU, não extern/protótipos."""
     root = Path(upstream)
     registry = root / "src/gen/spu_jobs.c"
     if not registry.is_file():
@@ -36,13 +36,54 @@ def missing_spurs_job_symbols(upstream):
     wanted = set(re.findall(
         r"extern\s+void\s+(job_[A-Za-z0-9_]+)\s*\(",
         registry.read_text(encoding="utf-8", errors="replace")))
-    if not wanted:
-        return []
     found = set()
     for path in (root / "src/spu_gen").rglob("*.c"):
         source = path.read_text(encoding="utf-8", errors="replace")
-        found.update(name for name in wanted if name + "(" in source)
+        for name in wanted:
+            pattern = r"(?m)^\s*void\s+" + re.escape(name) + r"\s*\([^;{}]*\)\s*\{"
+            if re.search(pattern, source):
+                found.add(name)
     return sorted(wanted - found)
+
+
+def validate_jobqueue_manifest(upstream):
+    """Prova a origem dos símbolos pelos hashes de fontes geradas localmente."""
+    from prepare_jobqueue import expected_jobs, verify_generated_source
+
+    root = Path(upstream)
+    registry = root / "src/gen/spu_jobs.c"
+    if not registry.is_file():
+        return ["src/gen/spu_jobs.c não encontrado"]
+    # Nos testes unitários anteriores o registro pode ser intencionalmente vazio.
+    source = registry.read_text(encoding="utf-8", errors="replace")
+    if "spu_workload_register_img" not in source:
+        return []
+    try:
+        expected = expected_jobs(registry)
+    except ValueError as exc:
+        return ["Registro JobQueue inconsistente: " + str(exc)]
+    path = root / "src/spu_gen/local-jobqueue-report.json"
+    if not path.is_file():
+        return ["Manifesto verificado ausente: execute prepare_jobqueue.py com os 15 dumps locais"]
+    try:
+        report = json.loads(path.read_text(encoding="utf-8"))
+        jobs = report["jobs"]
+        if report.get("verified") is not True or report.get("job_count") != 15:
+            return ["Manifesto não confirma 15 jobs SPURS reais"]
+        keys = [row["fingerprint"] for row in jobs]
+        if len(keys) != 15 or set(keys) != set(expected):
+            return ["Manifesto não corresponde aos 15 fingerprints do registro"]
+        for row in jobs:
+            fp = row["fingerprint"]
+            src = root / "src/spu_gen" / ("job_" + fp) / "spu_recomp.c"
+            if not verify_generated_source(src, fp):
+                return ["Job levantado sem funções definidas: " + fp]
+            sha = hashlib.sha256(src.read_bytes()).hexdigest()
+            if sha != row["source_sha256"]:
+                return ["Job levantado alterado após validação: " + fp]
+    except (OSError, ValueError, TypeError, KeyError) as exc:
+        return ["Manifesto JobQueue inválido: " + str(exc)]
+    return []
 
 
 def inspect(upstream, runtime, eboot=None, *, is_windows=None, command=None):
@@ -87,6 +128,8 @@ def inspect(upstream, runtime, eboot=None, *, is_windows=None, command=None):
             " símbolo(s), por exemplo " + ", ".join(missing_jobs[:3]))
     if not (upstream / "src/gen/spu_jobs.c").is_file():
         failures.append("Registro de JobQueue SPURS ausente: src/gen/spu_jobs.c")
+    jobqueue_errors = validate_jobqueue_manifest(upstream)
+    failures.extend(jobqueue_errors)
     version = "not-provided"
     if eboot is None:
         failures.append("Informe --eboot com EBOOT.ELF original do disco 1.00")
@@ -108,7 +151,7 @@ def inspect(upstream, runtime, eboot=None, *, is_windows=None, command=None):
     return {"ready": not failures, "target": "BCUS98106-disc-1.00",
             "upstream": str(upstream), "runtime": str(runtime),
             "eboot_version": version, "generated_ppu_files": len(ppu),
-            "generated_spu_files": len(spu), "missing_job_symbols": missing_jobs, "errors": failures, "warnings": warnings}
+            "generated_spu_files": len(spu), "missing_job_symbols": missing_jobs, "jobqueue_manifest_errors": jobqueue_errors, "errors": failures, "warnings": warnings}
 
 def main(argv=None):
     p = argparse.ArgumentParser(description=__doc__)
