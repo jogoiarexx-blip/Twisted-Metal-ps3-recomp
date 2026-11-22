@@ -119,6 +119,15 @@ def verify_generated_source(source, fingerprint):
     return True
 
 
+def normalize_includes(path):
+    # O lifter emite caminhos relativos; CMake do port usa includes runtime/spu.
+    text = path.read_text(encoding="utf-8")
+    new = re.sub(r'#include\s+"(?:\.\./)+runtime/spu/([A-Za-z0-9_]+\.h)"',
+                 r'#include "\1"', text)
+    if new != text:
+        path.write_text(new, encoding="utf-8")
+
+
 def generate(upstream, runtime, report, *, overwrite=False, runner=None):
     if not report["ready"]:
         raise ValueError("Dumps incompletos/inválidos: não foi iniciado nenhum lift")
@@ -143,6 +152,10 @@ def generate(upstream, runtime, report, *, overwrite=False, runner=None):
             if result.returncode:
                 raise RuntimeError("Lifting JobQueue " + fp + " falhou (exit " +
                                    str(result.returncode) + ")")
+        for generated_file in (source, outdir / "spu_recomp.h"):
+            if not generated_file.is_file():
+                raise RuntimeError("Lifter não produziu: " + str(generated_file))
+            normalize_includes(generated_file)
         if not verify_generated_source(source, fp):
             raise RuntimeError("Símbolos SPU reais não encontrados após lift: " + fp)
         generated.append({"fingerprint": fp, "size": meta["bytes"],
