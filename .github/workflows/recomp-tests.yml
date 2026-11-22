@@ -35,6 +35,11 @@ jobs:
           g++ -std=c++17 -O2 -Wall -Wextra -Werror spurs_hle_test.cpp -o /tmp/spurs_hle_test
           /tmp/spurs_hle_test
 
+      - name: Build and run sysPrx & GCM HLE tests
+        run: |
+          g++ -std=c++17 -O2 -Wall -Wextra -Werror sysprx_hle_test.cpp -o /tmp/sysprx_hle_test
+          /tmp/sysprx_hle_test
+
       - name: Build and run heap initialization tests
         run: |
           g++ -std=c++17 -O2 -Wall -Wextra -Werror heap_init.cpp heap_init_test.cpp -o /tmp/heap_init_test
