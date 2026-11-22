@@ -1,3 +1,5 @@
+> **v0.16 — preparação de build Windows (disco 1.00):** pré-requisitos e compilação segura do upstream em [integration/native/README.md](integration/native/README.md). A experiência v0.15 com ELF 1.06 foi preservada; **não há versão jogável publicada**. Testes da CI usam arquivos sintéticos.
+
 > **Crossfeed experimental (sp00nznet + FranklinCG):** adicionados testes sintéticos de descompressão, Taskset/SPURS e proteção para distinguir os ELFs 1.00 e 1.06. São componentes isolados, **não um jogo jogável**. Veja [integração e próximos marcos](integration/upstream/README.md) e [licenças/atribuição](integration/upstream/NOTICES.md).
 
 > **v0.15 publicada — inicialização do heap:** o boot probe validado com o EBOOT 1.06 agora avança até a chamada `0x988AA8`, mantendo essa chamada como pendência explícita. Código, verificadores e testes de heap estão no diretório [`recomp/`](recomp/). Veja [notas técnicas v0.15](EVOLUCAO-v0.15-HEAP-INIT.md). **Ainda não há jogo nativo jogável ou ganho de FPS comprovado.**

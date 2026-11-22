@@ -58,3 +58,16 @@ jobs:
       - name: Check EBOOT target identity gate (no game files)
         run: |
           python3 -m unittest discover -s ../integration/upstream -p 'test_*.py' -v
+
+  native-port-preflight:
+    # Synthetic tests, no EBOOT or game binaries.
+    name: Native preflight tests (${{ matrix.os }})
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        os: [ubuntu-latest, windows-latest]
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Test native build gate
+        run: python -m unittest discover -s integration/native -p "test_*.py" -v
