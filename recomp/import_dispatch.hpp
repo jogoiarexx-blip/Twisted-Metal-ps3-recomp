@@ -19,6 +19,7 @@ inline uint64_t dispatch_import(uint64_t address, Cpu &cpu, Memory &mem) {
     }
     if(entry->nid==0xa3e3be68u) return sys_ppu_thread_once_hle(cpu,mem);
     if(entry->nid==0x42b23552u) return sys_prx_register_library_hle(cpu);
+    if(entry->nid==0x2f85c0efu) return sys_lwmutex_create_hle(cpu,mem);
   }
   if(std::string(entry->module)=="cellSpurs") {
     if(entry->nid==0x7fdf4fefu) return spurs_barrier_initialize(cpu,mem);

@@ -88,4 +88,7 @@ uint64_t heap_list_heads_00988b0c(Cpu&,Memory&);
 uint64_t heap_after_00988b0c(Cpu&,Memory&);
 uint64_t heap_helper_00988aa8(Cpu&,Memory&);
 uint64_t heap_after_00988aa8(Cpu&,Memory&);
+uint64_t heap_helper_00988314(Cpu&,Memory&);
+uint64_t heap_after_00988314(Cpu&,Memory&);
+uint64_t startup_after_heap_init(Cpu&,Memory&);
 }

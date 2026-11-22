@@ -10,6 +10,7 @@ REGIONS = (
     (0x98c8c0, 0x98c954, 'd0eff769e237e0ab4936226ba7a75ab6655195cc9d6cac35dd7f728f7aa3ca98'),
     (0x988b78, 0x988be8, 'ef9fa0567ab2b10124194a11d6428be21879f9fb064a934e97e85592ff859b49'),
     (0x988aa8, 0x988b0c, '10f77ca3f68f5dafadcff8226808ebb862914b3ddd0a94d244cd5666bd1646c8'),
+    (0x988314, 0x9883a0, '33b13cc337d7e773f85a9f83b92f1779904fff590938fae94177f8190f3eedec'),
 )
 def verify(path):
     content = Path(path).read_bytes()

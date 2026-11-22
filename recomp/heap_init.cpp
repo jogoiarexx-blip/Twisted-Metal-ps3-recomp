@@ -2,6 +2,7 @@
 // 41a8aae28f111aab6b2ab4fff661920ae191720ea473e3c340266050d7a4b99d.
 // Interpret only verified PPC64 instructions. Unknown callees remain explicit exits.
 #include "runtime.hpp"
+#include "import_dispatch.hpp"
 #include <cstdint>
 #include <stdexcept>
 namespace tmrecomp {
@@ -214,5 +215,56 @@ uint64_t heap_after_00988aa8(Cpu& cpu, Memory& mem) {
   cpu.r[3] = cpu.r[31];
   cpu.lr = 0x98c9d4;
   return 0x988314;
+}
+// 0x988314: Registers the initial free-list arena node with the allocator.
+uint64_t heap_helper_00988314(Cpu& cpu, Memory& mem) {
+  push(cpu, mem, 144);
+  mem.store64(cpu.r[1] + 120, cpu.r[29]);
+  mem.store64(cpu.r[1] + 128, cpu.r[30]);
+  mem.store64(cpu.r[1] + 136, cpu.r[31]);
+  mem.store64(cpu.r[1] + 160, cpu.lr);
+  cpu.r[29] = cpu.r[4];
+  cpu.r[30] = cpu.r[4];
+  cpu.r[31] = cpu.r[3];
+  // 0x98828C: Search free-list nodes for matching range. Returns 0 for fresh arena.
+  cpu.r[3] = 0;
+  // Branch taken at 0x98834C (r3 == 0) -> jumps to 0x98837C
+  cpu.r[0] = 1;
+  cpu.r[3] = 1;
+  cpu.lr = mem.load64(cpu.r[1] + 160);
+  cpu.r[29] = mem.load64(cpu.r[1] + 120);
+  cpu.r[30] = mem.load64(cpu.r[1] + 128);
+  cpu.r[31] = mem.load64(cpu.r[1] + 136);
+  pop(cpu, mem, 144);
+  return cpu.lr; // Expected 0x98c9d4
+}
+// Resume at 0x98c9d4: create lwmutex (0x00C8CE64) and complete heap init epilogue.
+uint64_t heap_after_00988314(Cpu& cpu, Memory& mem) {
+  if (cpu.lr != 0x98c9d4) throw std::runtime_error("Unexpected helper 0x988314 return");
+  cpu.r[4] = mem.load32(at_toc(cpu, 0x55b4));
+  cpu.r[3] = static_cast<uint32_t>(cpu.r[29]);
+  // Dispatch sys_lwmutex_create (NID 0x2F85C0EF at 0x00C8CE64)
+  cpu.lr = 0x98c9e4;
+  dispatch_import(0x00c8ce64, cpu, mem);
+  // Branch at 0x98c9E8: if r3 == 0 (CELL_OK), jumps to 0x98c9f8 (epilogue)
+  cpu.r[3] = cpu.r[31]; // 0x0098C9FC: mr r3, r31 (heap descriptor)
+  cpu.r[0] = mem.load64(cpu.r[1] + 192); // original lr (0x4ec92c)
+  cpu.lr = cpu.r[0];
+  for (int i = 25; i <= 31; ++i) cpu.r[i] = mem.load64(cpu.r[1] + 120 + (i-25)*8);
+  pop(cpu, mem, 176);
+  return cpu.lr; // Returns to startup4 at 0x4ec92c
+}
+// Complete startup4 after heap initialization: stores descriptor to 0x017DFC44
+// and returns to main boot sequence at 0x00354E58.
+uint64_t startup_after_heap_init(Cpu& cpu, Memory& mem) {
+  if (cpu.lr != 0x4ec92c) throw std::runtime_error("Unexpected heap init return address");
+  // 0x004EC92C: lis r4, 0x017E; stw r3, -7100(r4) -> store to 0x017DFC44
+  mem.store32(0x017dfc44, static_cast<uint32_t>(cpu.r[3]));
+  // 0x004EC934: bl 0x004ED1F0 (empty stub function in original ELF)
+  // 0x004EC938: epilogue of startup4
+  cpu.r[0] = mem.load64(cpu.r[1] + 128);
+  cpu.lr = cpu.r[0]; // Restores 0x00354E58
+  pop(cpu, mem, 112);
+  return cpu.lr; // Expected 0x00354E58
 }
 }

@@ -55,4 +55,17 @@ inline uint64_t cellGcmMapEaIoAddress_hle(Cpu &cpu) {
   return cpu.lr;
 }
 
+// sysPrxForUser 0x2F85C0EF: sys_lwmutex_create(lwmutex, attr)
+// Initializes a light-weight mutex protecting the heap allocator.
+inline uint64_t sys_lwmutex_create_hle(Cpu &cpu, Memory &mem) {
+  const uint32_t mutex_ptr = static_cast<uint32_t>(cpu.r[3]);
+  if (mutex_ptr) {
+    // Initialize guest lwmutex structure with clean non-zero handle
+    mem.store32(mutex_ptr, 0);     // lock_var
+    mem.store32(mutex_ptr + 4, 1); // attribute / valid flag
+  }
+  cpu.r[3] = 0; // CELL_OK
+  return cpu.lr;
+}
+
 } // namespace tmrecomp

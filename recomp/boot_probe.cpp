@@ -99,6 +99,15 @@ int main(int argc,char**argv) {
   std::cout<<"Arena block header initialized and tagged; helper 0x988aa8 returned\n";
   next=heap_after_00988aa8(cpu,mem);
   if (next!=0x988314 || cpu.lr!=0x98c9d4)throw std::runtime_error("Helper 0x988314 boundary mismatch");
-  std::cout<<"NEXT: helper 0x"<<std::hex<<next<<" (free-list node insertion, NOT recompiled). No menu or gameplay yet.\n";
+  next=heap_helper_00988314(cpu,mem);
+  if (next!=0x98c9d4)throw std::runtime_error("Free-list registration helper 0x988314 failed");
+  std::cout<<"Free-list node registered; helper 0x988314 returned\n";
+  next=heap_after_00988314(cpu,mem);
+  if (next!=0x4ec92c)throw std::runtime_error("Heap epilogue failed");
+  std::cout<<"Heap initialization complete! Returned to startup4 at 0x"<<std::hex<<next<<" (descriptor: 0x"<<cpu.r[3]<<")\n";
+  next=startup_after_heap_init(cpu,mem);
+  if (next!=0x354e58)throw std::runtime_error("Startup4 epilogue return mismatch");
+  std::cout<<"Memory subsystem initialized; stored to 0x017DFC44; returned to 0x"<<std::hex<<next<<"\n";
+  std::cout<<"NEXT: engine subsystem constructors at 0x"<<std::hex<<next<<" (GpuManager, SPURS, TaskManager). No menu or gameplay yet.\n";
  }catch(const std::exception&e){std::cerr<<e.what()<<"\n";return 1;}
 }

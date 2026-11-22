@@ -7,6 +7,7 @@ static Memory make_memory(){
   Memory m(0,0x2100000);
   m.store32(0xf31ac0+0x551c,0x01a69fc0);
   m.store32(0xf31ac0+0x5520,0x00f9fef4);
+  m.store32(0xf31ac0+0x55b4,0x01a69fd0);
   m.store32(0x00f9fef4,0x00100000);
   m.map_region(0x40000000,0x00f00000);
   return m;
@@ -53,6 +54,19 @@ try {
   next=heap_after_00988aa8(cpu,mem);
   check(next==0x988314 && cpu.lr==0x98c9d4,"boundary to next helper 0x988314");
   check(cpu.r[3]==0x40000010 && cpu.r[4]==0x400001f8,"helper 0x988314 arguments");
+  // Test helper 0x988314 execution (node registration)
+  next=heap_helper_00988314(cpu,mem);
+  check(next==0x98c9d4,"helper 0x988314 return to 0x98c9d4");
+  // Test complete heap init return via sys_lwmutex_create
+  next=heap_after_00988314(cpu,mem);
+  check(next==0x4ec92c && cpu.r[1]==0x1fffe80,"heap init completed and returned to startup4");
+  check(cpu.r[3]==0x40000010,"heap allocator descriptor pointer returned in r3");
+  // Test startup4 descriptor storage to 0x017DFC44 and return to 0x00354E58
+  mem.store64(cpu.r[1], cpu.r[1] + 112);
+  mem.store64(cpu.r[1] + 128, 0x354e58);
+  next=startup_after_heap_init(cpu,mem);
+  check(next==0x354e58,"startup4 completed and returned to main boot sequence at 0x354e58");
+  check(mem.load32(0x017dfc44)==0x40000010,"heap descriptor stored in static game pointer 0x017DFC44");
   // Verify unaligned arena padding branch in 0x988aa8
   Cpu unaligned; unaligned.r[1]=0x1fffe80; unaligned.r[2]=0xf31ac0;
   unaligned.r[3]=0x40000010; unaligned.r[4]=0x400001f4; unaligned.r[5]=0xeffdd0; unaligned.lr=0x98c9c8;
