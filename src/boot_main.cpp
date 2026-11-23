@@ -257,8 +257,8 @@ static DWORD WINAPI vblank_ticker(LPVOID)
      * draw stays classified offscreen, render_frame() is never called and the
      * window shows nothing but the clear.
      *
-     * TM_RSX_W / TM_RSX_H override it; the default matches this title. */
-    uint32_t rsx_w = 1280, rsx_h = 704;
+     * TM_RSX_W / TM_RSX_H override it; the default matches standard 720p HD. */
+    uint32_t rsx_w = 1280, rsx_h = 720;
     if (const char* e = getenv("TM_RSX_W")) rsx_w = (uint32_t)strtoul(e, 0, 0);
     if (const char* e = getenv("TM_RSX_H")) rsx_h = (uint32_t)strtoul(e, 0, 0);
     /* RSX_LIVE_DRAW=1 selects the live NV4097->D3D12 engine: the null backend

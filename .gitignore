@@ -62,6 +62,7 @@ run_trace.ps1
 run_capture.ps1
 run_test_err.log
 scratch/
+dumps/
 *.bmp
 *.ppm
 capture_fb*.png

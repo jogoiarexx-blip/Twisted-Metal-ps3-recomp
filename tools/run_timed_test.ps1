@@ -3,6 +3,7 @@ $env:GCM_SUBCH1_3D = "1"
 $env:TM_GAMELOG = "1"
 $env:RSX_LIVE_DRAW = "1"
 $env:PAD_AUTOPRESS = "1"
+$env:PAD_FORCE_FOCUS = "1"
 $env:TM_SKIP_BANKUNLOAD = "1"
 $env:TM_BRB_SILENT = "1"
 $env:TM_BRB_PARK = "1"
@@ -16,6 +17,7 @@ $env:LD_FRAME_DUMP = "D:\Twisted metal\dumps"
 $env:LD_FRAME_DUMP_EVERY = "10"
 $env:LD_FRAME_DUMP_FROM = "200"
 
+Remove-Item -Path "D:\Twisted metal\dumps\*.ppm" -Force -ErrorAction SilentlyContinue
 if (-not (Test-Path "D:\Twisted metal\dumps")) {
     New-Item -ItemType Directory -Path "D:\Twisted metal\dumps" -Force | Out-Null
 }
