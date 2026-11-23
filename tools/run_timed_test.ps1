@@ -9,6 +9,8 @@ $env:TM_BRB_PARK = "1"
 $env:TM_BRB_ACK = "1"
 $env:TM_JQ_WORKERS = "4"
 $env:TM_LOADDONE = "5"
+$env:TM_VIDEO_MODES = "2,1"
+$env:TM_FORCEWORLD = "15,direct"
 $env:TM_LIVE_DUMP = "1"
 
 $elf = "E:\01 jogos\Emulador ps3\01 roms\twisted\PS3_GAME\USRDIR\EBOOT.elf"

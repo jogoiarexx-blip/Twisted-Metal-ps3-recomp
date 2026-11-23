@@ -36,5 +36,6 @@ $env:TM_BRB_ACK = "1"
 $env:TM_JQ_WORKERS = "4"
 $env:TM_LOADDONE = "5"
 $env:TM_VIDEO_MODES = "2,1"
+$env:TM_FORCEWORLD = "15,direct"
 
 & ".\twistedmetal.exe" "$targetElf"

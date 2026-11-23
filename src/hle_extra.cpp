@@ -524,12 +524,15 @@ static void cellVideoOutGetDeviceInfo(ppu_context* ctx)
         if (!n) { modes[0] = VO_RES_720; n = 1; }
     }
     for (uint32_t i = 0; i < n; i++) {
-        const uint32_t m = info + 0x0C + i * 8;
-        vm_write8(m + 0, modes[i]);
-        vm_write8(m + 1, VO_SCAN_PROGRESSIVE);
-        vm_write8(m + 2, 0);                 /* conversion: none */
-        vm_write8(m + 3, VO_ASPECT_16_9);
-        vm_write16(m + 6, VO_RATES);
+        /* Write to both +0x0C (legacy SDK) and +0x20 (PS3 SDK 3.60+ / TM 2012 layout at stack offset +0x190) */
+        for (uint32_t base_off : { 0x0Cu, 0x20u }) {
+            const uint32_t m = info + base_off + i * 8;
+            vm_write8(m + 0, modes[i]);
+            vm_write8(m + 1, VO_SCAN_PROGRESSIVE);
+            vm_write8(m + 2, 0);                 /* conversion: none */
+            vm_write8(m + 3, VO_ASPECT_16_9);
+            vm_write16(m + 6, VO_RATES);
+        }
     }
 
     vm_write8(info + 0x00, 1);   /* portType = HDMI */
