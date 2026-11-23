@@ -16,7 +16,7 @@ O jogo **inicializa em código nativo x86-64**, carrega a engine TMX, inicializa
 | **Subsistema de Áudio** | ✅ **Ativo** | BoomRangBuss inicializado; bancos carregados (`menu`, `global`, `weapons`, `shell`, `fodder`, `igv_english`) |
 | **Gráficos (RSX → D3D12)** | ✅ **Renderizando** | Pipeline D3D12 funcional com cache de shaders, alvos de renderização múltiplos e scaled-blit |
 | **Entrada (Controle/Teclado)**| ✅ **Funcional** | `cellPad` integrado com autopress (`PAD_AUTOPRESS=1`), suporte a scripts e arquivos virtuais |
-| **Entrada nas Fases** | 🔄 **Em Progresso** | Montagem de arquivos de níveis (`suburbs.psarc`, `arena.psarc`) e transição para match in-game |
+| **Entrada nas Fases** | ✅ **Ativo** | `WorldLoader::setup`, thread `ArchiveLoader`, carregamento de 8 protótipos de veículos (`cars/*.rtt`), 26 MB de áudio de fases e loop de simulação 3D (`world::0020C7F8`) alcançando 518 draws/frame |
 
 ### 📸 Evidência Visual da Execução Nativa (RSX Direct3D 12 @ 1280x704)
 
@@ -55,6 +55,7 @@ $env:TM_BRB_ACK = "1"
 $env:TM_JQ_WORKERS = "4"
 $env:TM_LOADDONE = "5"
 $env:TM_VIDEO_MODES = "2,1"
+$env:TM_FORCEWORLD = "15,direct"
 ```
 
 ---

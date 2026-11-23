@@ -377,7 +377,7 @@ static DWORD WINAPI vblank_ticker(LPVOID)
                           if (++shot >= 5) done = 1;
                           static const uint32_t offs[] = {
                               0x00AB0000u, 0x00AB1400u, 0x01BE0000u, 0x01F50000u,
-                              0x01F51400u, 0x01870000u, 0x01190000u, 0x00010000u };
+                              0x01F51400u, 0x01870000u, 0x01190000u, 0x00010000u, 0x00556000u };
                           fprintf(stderr, "[live] dump #%d (last_draws=%u)\n", shot,
                                   rsx_live_draw_get_last_draws());
                           for (unsigned k = 0; k < sizeof offs / sizeof offs[0]; k++) {
