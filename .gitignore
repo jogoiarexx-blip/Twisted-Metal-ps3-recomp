@@ -58,5 +58,9 @@ meta/
 *.json.bak
 *.log
 run_test.ps1
+run_capture.ps1
 run_test_err.log
 scratch/
+*.bmp
+*.ppm
+capture_fb*.png
