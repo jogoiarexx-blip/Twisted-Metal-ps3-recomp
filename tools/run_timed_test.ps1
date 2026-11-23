@@ -12,13 +12,20 @@ $env:TM_LOADDONE = "5"
 $env:TM_VIDEO_MODES = "2,1"
 $env:TM_FORCEWORLD = "15,direct"
 $env:TM_LIVE_DUMP = "1"
+$env:LD_FRAME_DUMP = "D:\Twisted metal\dumps"
+$env:LD_FRAME_DUMP_EVERY = "10"
+$env:LD_FRAME_DUMP_FROM = "200"
+
+if (-not (Test-Path "D:\Twisted metal\dumps")) {
+    New-Item -ItemType Directory -Path "D:\Twisted metal\dumps" -Force | Out-Null
+}
 
 $elf = "E:\01 jogos\Emulador ps3\01 roms\twisted\PS3_GAME\USRDIR\EBOOT.elf"
 $exe = "D:\Twisted metal\twistedmetal.exe"
 
 $p = Start-Process -FilePath $exe -ArgumentList "`"$elf`"" -WorkingDirectory "D:\Twisted metal" -PassThru -RedirectStandardOutput "D:\Twisted metal\test_advance_out.log" -RedirectStandardError "D:\Twisted metal\test_advance_err.log"
 
-Start-Sleep -Seconds 30
+Start-Sleep -Seconds 45
 
 if (-not $p.HasExited) {
     Stop-Process -Id $p.Id -Force

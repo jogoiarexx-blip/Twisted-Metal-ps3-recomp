@@ -195,6 +195,7 @@ extern "C" uint32_t rsx_live_draw_get_frames(void);
 extern "C" uint32_t rsx_live_draw_get_last_draws(void);
 extern "C" void     rsx_live_draw_flush(void);
 extern "C" void     rsx_live_draw_present(uint32_t buffer_id);
+extern "C" uint32_t cellGcmGetCurrentDisplayBufferId(void);
 extern "C" int      rsx_live_draw_debug_dump_surface(uint32_t location, uint32_t offset,
                                                     const char* path);
 extern "C" void     rsx_live_draw_a010_probe_begin(void);
@@ -372,8 +373,23 @@ static DWORD WINAPI vblank_ticker(LPVOID)
                        * broken renderer. */
                       static int shot = 0;
                       static uint32_t skip = 0;
+                      static int dumped_high = 0;
+                      if (armed && !dumped_high && rsx_live_draw_get_last_draws() >= 100u) {
+                          dumped_high = 1;
+                          static const uint32_t offs_high[] = {
+                              0x00AB0000u, 0x00AB1400u, 0x01BE0000u, 0x01F50000u,
+                              0x01F51400u, 0x01870000u, 0x01190000u, 0x00010000u, 0x00556000u };
+                          fprintf(stderr, "[live] HIGH DRAWS dump (draws=%u)\n",
+                                  rsx_live_draw_get_last_draws());
+                          for (unsigned k = 0; k < sizeof offs_high / sizeof offs_high[0]; k++) {
+                              char path[64];
+                              snprintf(path, sizeof path, "surf_high_%08X.ppm", offs_high[k]);
+                              rsx_live_draw_debug_dump_surface(0, offs_high[k], path);
+                          }
+                          fflush(stderr);
+                      }
                       if (armed && !done && rsx_live_draw_get_last_draws() >= (secs ? secs : 1u)
-                          && (skip++ % 60) == 0) {
+                          && (skip++ % 15) == 0) {
                           if (++shot >= 5) done = 1;
                           static const uint32_t offs[] = {
                               0x00AB0000u, 0x00AB1400u, 0x01BE0000u, 0x01F50000u,
@@ -387,7 +403,7 @@ static DWORD WINAPI vblank_ticker(LPVOID)
                           }
                           fflush(stderr);
                       } }
-                    if (flipped) rsx_live_draw_present(0);
+                    if (flipped) rsx_live_draw_present(cellGcmGetCurrentDisplayBufferId());
                     /* TM_LIVE_DUMP=<secs>,<hex offset>: ask the engine to write
                      * one of its tracked surfaces out, so "is it drawing" is
                      * answerable from its own resources rather than a readback
