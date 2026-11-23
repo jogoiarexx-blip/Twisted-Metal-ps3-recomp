@@ -18,6 +18,11 @@ O jogo **inicializa em código nativo x86-64**, carrega a engine TMX, inicializa
 | **Entrada (Controle/Teclado)**| ✅ **Funcional** | `cellPad` integrado com autopress (`PAD_AUTOPRESS=1`), suporte a scripts e arquivos virtuais |
 | **Entrada nas Fases** | 🔄 **Em Progresso** | Montagem de arquivos de níveis (`suburbs.psarc`, `arena.psarc`) e transição para match in-game |
 
+### 📸 Evidência Visual da Execução Nativa (RSX Direct3D 12 @ 1280x704)
+
+![Twisted Metal 2012 Logo Renderizado](docs/screenshots/twisted_metal_logo_1280x704.png)
+*Frame real capturado da execução nativa do executável recompilado `twistedmetal.exe`: Logo 3D autêntico do Twisted Metal centralizado em HD 1280x704.*
+
 ---
 
 ## 🚀 Como Executar
