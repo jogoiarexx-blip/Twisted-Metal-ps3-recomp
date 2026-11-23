@@ -512,8 +512,8 @@ static void cellVideoOutGetDeviceInfo(ppu_context* ctx)
 
     /* TM_VIDEO_MODES overrides the advertised set (comma-separated resolution
      * ids) so the title's mode negotiation can be probed without a rebuild.
-     * A real display reports what it supports; this is that knob. */
-    uint8_t modes[32] = { VO_RES_480, VO_RES_576, VO_RES_720, VO_RES_1080 };
+     * A real display reports what it supports; this is that knob. Default to 720p HD. */
+    uint8_t modes[32] = { VO_RES_720, VO_RES_1080, VO_RES_480, VO_RES_576 };
     uint32_t n = 4;
     if (const char* env = getenv("TM_VIDEO_MODES")) {
         n = 0;
@@ -1143,8 +1143,29 @@ void func_005F8FF4_lifted(ppu_context* ctx);
 void func_005F8FF4(ppu_context* ctx) { tm_trace("cw::005F8FF4", func_005F8FF4_lifted, ctx); }
 void func_00606B6C_lifted(ppu_context* ctx);
 void func_00606B6C(ppu_context* ctx) { tm_trace("cw::00606B6C", func_00606B6C_lifted, ctx); }
+extern "C" uint8_t* vm_base;
 void func_00607670_lifted(ppu_context* ctx);
-void func_00607670(ppu_context* ctx) { tm_trace("cw::00607670", func_00607670_lifted, ctx); }
+void func_00607670(ppu_context* ctx)
+{
+    func_00607670_lifted(ctx);
+    static int auto_load = -1;
+    if (auto_load < 0) { const char* e = getenv("TM_LOADDONE"); auto_load = e ? atoi(e) : 0; }
+    if (auto_load > 0 && vm_base) {
+        static unsigned long long t0 = 0;
+        const unsigned long long now = (unsigned long long)time(NULL);
+        if (!t0) t0 = now;
+        if (now - t0 >= (unsigned)auto_load) {
+            static int warned = 0;
+            if (!warned) {
+                fprintf(stderr, "[probe] auto-advancing cw::00607670 load check (r3=0x%08X)\n", (uint32_t)ctx->gpr[3]);
+                warned = 1;
+            }
+            vm_write32(0x018F205Cu, 1);
+            vm_write8(0x0190FC89u, 1);
+            ctx->gpr[3] = 1;
+        }
+    }
+}
 void func_0060E500_lifted(ppu_context* ctx);
 void func_0060E500(ppu_context* ctx) { tm_trace("cw::0060E500", func_0060E500_lifted, ctx); }
 void func_00617730_lifted(ppu_context* ctx);
@@ -1751,7 +1772,8 @@ extern "C" void tm_loaddone_tick(void)
     const int first = !done;
     done = 1;
     vm_write8(0x0190FC89u, 1);
-    if (first) fprintf(stderr, "[probe] set load-complete byte 0x0190FC89 = 1 after %d s\n", secs);
+    vm_write32(0x018F205Cu, 1);
+    if (first) fprintf(stderr, "[probe] set load-complete byte 0x0190FC89 = 1, desc 0x018F205C = 1 after %d s\n", secs);
     fflush(stderr);
 }
 

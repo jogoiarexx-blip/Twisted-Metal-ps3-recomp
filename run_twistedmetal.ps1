@@ -27,6 +27,7 @@ Write-Host "Iniciando Twisted Metal Nativo com EBOOT: $targetElf" -ForegroundCol
 # Parametros de runtime para estabilidade de audio, SPURS e RSX
 $env:TM_GAMELOG = "1"
 $env:RSX_LIVE_DRAW = "1"
+$env:GCM_SUBCH1_3D = "1"
 $env:PAD_AUTOPRESS = "1"
 $env:TM_SKIP_BANKUNLOAD = "1"
 $env:TM_BRB_SILENT = "1"
@@ -34,5 +35,6 @@ $env:TM_BRB_PARK = "1"
 $env:TM_BRB_ACK = "1"
 $env:TM_JQ_WORKERS = "4"
 $env:TM_LOADDONE = "5"
+$env:TM_VIDEO_MODES = "2,1"
 
 & ".\twistedmetal.exe" "$targetElf"
