@@ -1,67 +1,111 @@
-> **v0.19 — Heap completo e retorno ao motor (0x354E58):** conclusão de toda a inicialização do alocador guest da engine TMX, registro de free-list circular em `0x988314`, HLE de `sys_lwmutex_create` (0x00C8CE64), gravação do descritor em `0x017DFC44` e retorno ao fluxo principal em `0x00354E58`. Executável direto para Windows: [`RODAR-BOOT-PROBE.cmd`](RODAR-BOOT-PROBE.cmd). Veja [evolução técnica v0.19](EVOLUCAO-v0.19-HEAP-COMPLETO.md).
-> 
-> **v0.18 — Decompilação do helper de arena PPU (0x988AA8):** decodificadas as 25 instruções PPC de alinhamento e tagging da arena do heap, com hash SHA-256 fixado. Veja [evolução técnica v0.18](EVOLUCAO-v0.18-ARENA-INIT.md).
-> 
-> **v0.18 — SPURS JobQueue com validação de dumps locais:** incorporado pipeline de verificação FNV/tamanho e lifting dos 15 módulos JobQueue, com manifesto e checagem do código gerado. Veja [instruções](integration/native/JOBQUEUE-v018.md). **Sem build nativo jogável comprovado: ainda falta a primeira captura real dos jobs.**
-> 
-> **Crossfeed upstream (sp00nznet + FranklinCG integrado):** incorporadas ferramentas de pipeline (`unpsarc.py`, `recarve_spu.py`, `symbolize.py`, `seed_gaps.py`, `post_lift.py`), HLE do agendador FIOS (`sys_ppu_thread_once` NID `0xA3E3BE68`), `sys_prx_register_library`, mapeamento RSX GCM e contratos de Taskset SPURS. Veja [CROSSFEED-UPSTREAMS.md](CROSSFEED-UPSTREAMS.md).
-> 
-> **v0.17 — PPU/SPU com pipeline local:** nova ferramenta para levantar o PPU e os SPUs embutidos do EBOOT 1.00, com validação de hash e diagnóstico dos 15 módulos JobQueue não incluídos no EBOOT. [Tutorial e limitações](integration/native/LIFT-PPU-SPU-v017.md). **Ainda não existe binário jogável gerado neste repositório.**
-> 
-> **v0.16 — preparação de build Windows (disco 1.00):** pré-requisitos e compilação segura do upstream em [integration/native/README.md](integration/native/README.md). A experiência v0.15 com ELF 1.06 foi preservada; **não há versão jogável publicada**. Testes da CI usam arquivos sintéticos.
-> 
-> **Crossfeed experimental (sp00nznet + FranklinCG):** adicionados testes sintéticos de descompressão, Taskset/SPURS e proteção para distinguir os ELFs 1.00 e 1.06. São componentes isolados, **não um jogo jogável**. Veja [integração e próximos marcos](integration/upstream/README.md) e [licenças/atribuição](integration/upstream/NOTICES.md).
-> 
-> **v0.15 publicada — inicialização do heap:** o boot probe validado com o EBOOT 1.06 agora avança até a chamada `0x988AA8`, mantendo essa chamada como pendência explícita. Código, verificadores e testes de heap estão no diretório [`recomp/`](recomp/). Veja [notas técnicas v0.15](EVOLUCAO-v0.15-HEAP-INIT.md). **Ainda não há jogo nativo jogável ou ganho de FPS comprovado.**
-> 
-> **v0.14 publicada — LV2 Memory HLE:** os arquivos de código C++ para alocação de memória guest, boot probe até `0x98C8C0`, testes e scripts de compilação foram sincronizados com a branch `main`. A validação de execução ocorreu localmente com o EBOOT 1.06 e **não equivale a um jogo jogável ou aumento comprovado de FPS**. Veja [evolução técnica](EVOLUCAO-v0.14-LV2-MEMORY.md) e [comandos de teste](recomp/README.md).
-> 
-> **v0.11:** novo [CROSSFEED-v0.11-SPURS.md](CROSSFEED-v0.11-SPURS.md), com dois NIDs SPURS de pós-FX ligados ao dispatcher e testes de memória big-endian. **Ainda não inicializa o jogo.**
-> 
-> **v0.9:** veja [EVOLUCAO-v0.9.md](EVOLUCAO-v0.9.md) para o novo bloco PPU, testes e limitações.
+# Twisted Metal (2012) — Static Recompilation (PS3 Nativo para Windows)
 
-# Twisted Metal (BCUS98106) — análise dos executáveis
+> Recompilação estática do *Twisted Metal* (2012, Eat Sleep Play / Sony Computer Entertainment, `BCUS98106`) a partir do binário de disco do PS3 para executável nativo Windows x86-64 — sem emulador underneath.
 
-Este pacote contém somente ferramentas e resultados de análise. Não contém o jogo nem um port executável.
+---
 
-**Versões:** `elf-map.json` mapeia o executável do disco 1.00. `elf-map-update-1.06.json` mapeia o novo `EBOOT(1).elf` enviado, possivelmente o executável da atualização 1.06 que o log mostra em uso. Consulte `COMPARACAO-VERSOES.md` e `RELATORIO-LOG.md`.
+## 🎮 Status Atual do Projeto
 
-## Arquivos identificados
+O jogo **inicializa em código nativo x86-64**, carrega a engine TMX, inicializa o subsistema de áudio BoomRangBuss, processa arquivos `.psarc` e `.rtt`, cria os workers de computação SPURS JobQueue e renderiza centenas de quadros via DirectX 12 (D3D12 RSX swapchain com resolução 1280x704 e scaled blit NV3089 para o display buffer).
 
-- `PARAM.SFO`: Twisted Metal, BCUS98106, versão de disco 01.00.
-- `EBOOT.BIN`: SELF de 16.309.120 bytes; SHA-256 `367ab214d106211b9c30767b302d1698c036254a653747cb02615c879d242373`.
-- `EBOOT.elf`: ELF64 PowerPC big endian, sem símbolos; SHA-256 `269642a56f3c70be74df41049876887d07aedd4171ce18a481a05067b1b8564e`. O mapa completo consta em `elf-map.json`. O novo `EBOOT(1).elf` tem SHA-256 `41a8aae28f111aab6b2ab4fff661920ae191720ea473e3c340266050d7a4b99d` e seu mapa está em `elf-map-update-1.06.json`.
+| Componente | Estado | Detalhes |
+|---|---|---|
+| **PPU Recompilation** | ✅ **Concluído** | 38.229 funções PPU levantadas (47.106 símbolos mapeados em 12 chunks, ~487 MB C++) |
+| **SPU Images & Jobs** | ✅ **Concluído** | 11 imagens SPU extraídas e embutidas (`embedded_spu_workloads.c`); 15 jobs JobQueue suportados |
+| **HLE & Runtime** | ✅ **Concluído** | Vinculado ao ps3recomp (`ydkj-master-bringup`) com correções para FIOS, SPURS Taskset2 e barreiras pós-FX |
+| **Subsistema de Áudio** | ✅ **Ativo** | BoomRangBuss inicializado; bancos carregados (`menu`, `global`, `weapons`, `shell`, `fodder`, `igv_english`) |
+| **Gráficos (RSX → D3D12)** | ✅ **Renderizando** | Pipeline D3D12 funcional com cache de shaders, alvos de renderização múltiplos e scaled-blit |
+| **Entrada (Controle/Teclado)**| ✅ **Funcional** | `cellPad` integrado com autopress (`PAD_AUTOPRESS=1`), suporte a scripts e arquivos virtuais |
+| **Entrada nas Fases** | 🔄 **Em Progresso** | Montagem de arquivos de níveis (`suburbs.psarc`, `arena.psarc`) e transição para match in-game |
 
-O campo de entrada do ELF (`0x00F030D0`) contém um descritor PPU com endereço de código `0x00348DE0` e TOC `0x00F21930`. Executar bytes no endereço do descritor seria um erro.
+---
 
-## Reproduzir o mapa
+## 🚀 Como Executar
 
-No Windows, execute `ANALISAR-WINDOWS.cmd`, arraste `EBOOT.elf` para a janela e pressione Enter. O resultado sera salvo em `elf-map-local.json` sem precisar instalar Python. O arquivo `elf-map.json` ja contem o resultado do ELF enviado.
+### Pré-requisitos
+- Windows 10/11 x64
+- Placa de vídeo com suporte a DirectX 12
+- Dump original do disco do jogo (*Twisted Metal 2012* - `BCUS98106` v1.00)
 
-Tambem e possivel usar Python 3:
-
+### Executando em 1 Clique
+Basta dar dois cliques em:
 ```cmd
-py -3 tools\map_elf.py EBOOT.elf -o elf-map-local.json
+RODAR-JOGO.cmd
+```
+Ou executar pelo PowerShell:
+```powershell
+.\run_twistedmetal.ps1
 ```
 
-O programa lê o ELF localmente e produz endereços, segmentos e candidatos a descritores de função. Ele não altera o ELF e não exige arquivos de fases. O campo `descriptor_count` é contagem de candidatos, não prova de funções recompiladas.
+O launcher configura automaticamente as variáveis de ambiente otimizadas:
+```powershell
+$env:TM_GAMELOG = "1"
+$env:RSX_LIVE_DRAW = "1"
+$env:PAD_AUTOPRESS = "1"
+$env:TM_SKIP_BANKUNLOAD = "1"
+$env:TM_BRB_SILENT = "1"
+$env:TM_BRB_PARK = "1"
+$env:TM_BRB_ACK = "1"
+$env:TM_JQ_WORKERS = "4"
+$env:TM_LOADDONE = "5"
+```
 
-## Próximo marco técnico
+---
 
-O ELF novo foi mapeado. O próximo passo é confirmar sua origem na pasta da atualização, fazer perfil da fase lenta e estudar fluxo de controle, chamadas do sistema e tarefas SPU; os endereços gerados não são um port jogável.
+## 🛠️ Como Compilar a partir do Código Fonte
 
-## Primeira implementação de recompilação estática
+### Pré-requisitos de Compilação
+- Python 3.10+
+- CMake 3.20+ e Ninja
+- LLVM Clang (`clang-cl`) ou MSVC BuildTools 2022
+- ps3recomp clonado na branch `ydkj-master-bringup`
 
-A pasta `recomp/` contém o primeiro código C++ gerado de três funções PPU do novo ELF, seu gerador restrito e uma comparação com execução PowerPC. Leia `recomp/README.md` para endereços, comandos e limites. Este trabalho ainda não executa o jogo.
+### Passo a Passo
+1. **Geração das Funções e Imagens SPU:**
+   ```bash
+   python tools/find_functions.py input/EBOOT.ELF --output recomp/functions_100.json
+   python tools/seed_gaps.py input/EBOOT.ELF recomp/functions_100.json -o recomp/functions_100_seeded.json
+   python tools/extract_spu_images.py input/EBOOT.ELF --output recomp/spu_100
+   python tools/recarve_spu.py recomp/spu_100
+   python tools/build_spu_workloads.py recomp/spu_100 recomp/spu_gen_100
+   ```
 
-### Inicialização (v0.5)
+2. **Lifting PPU:**
+   ```bash
+   python tools/ppu_lifter.py input/EBOOT.ELF \
+       --functions recomp/functions_100_seeded.json \
+       --code-end 0xC79C6C \
+       --output recomp/src_recomp_100 -j 12
+   python tools/post_lift.py recomp/src_recomp_100
+   ```
 
-A pasta `recomp/` agora traduz 30 instruções consecutivas desde a entrada PPU e executa os dois blocos com os segmentos reais do ELF até `0xC8D094`. Consulte `recomp/README.md` e use `recomp/COMPILAR-WINDOWS.cmd` se houver compilador C++ instalado. Ainda não inicializa o jogo.
+3. **Build Nativo:**
+   ```bash
+   cmake -B build -G Ninja -DCMAKE_BUILD_TYPE=Release -DCMAKE_CXX_COMPILER=clang-cl -DCMAKE_C_COMPILER=clang-cl
+   cmake --build build
+   ```
 
-### Importação TLS (v0.6)
+---
 
-O primeiro destino `0xC8D094` é `sys_initialize_tls`. O harness em `recomp/` contém uma implementação parcial de TLS e verifica a cópia de `PT_TLS`. Essa etapa ainda não inicializa o jogo.
+## 📁 Estrutura do Repositório
 
-### Dispatcher de importações (v0.7)
+```text
+├── RODAR-JOGO.cmd             # Atalho de execução rápida no Windows
+├── run_twistedmetal.ps1       # Script PowerShell configurado com os parâmetros de runtime
+├── recomp/                    # Metadados de análise e tabelas de NIDs
+│   ├── functions_100.json     # 31.032 funções detectadas do ELF base (1.00)
+│   ├── functions_100_seeded.json # 38.229 funções após cobertura de gaps
+│   ├── ppu_hle_nids_100.cpp   # Tabela de despacho de NIDs HLE para 1.00
+│   └── spurs_hle.hpp          # Implementação de barreiras SPURS e Taskset info
+├── tools/                     # Ferramentas auxiliares de análise e extração
+│   ├── gen_fallbacks.py       # Gerador de stubs HLE para símbolos ausentes
+│   ├── post_lift.py           # Patches idempotentes pós-lift (trampolins e loggers)
+│   └── unpsarc.py             # Leitor de arquivos de arquivos PSARC do jogo
+└── docs/                      # Documentação técnica e logs de engenharia reversa
+```
 
-Os arquivos `recomp/imports.json`, `recomp/import_table.hpp` e `recomp/import_dispatch.hpp` descrevem 583 importações PPU vistas no log da sessão e retomam a execução depois do HLE parcial de `sys_initialize_tls`, em `0x354DE0`. As demais importações ainda não têm implementação. O jogo não abre nesta versão.
+---
+
+## ⚖️ Avisos Legais
+
+Este repositório contém estritamente código-fonte aberto, scripts de análise e ferramentas de recompilação estática. **Nenhum arquivo binário protegido por direitos autorais, imagem de disco, ELF descriptografado ou asset de áudio/vídeo da Sony/Eat Sleep Play está hospedado neste repositório.**

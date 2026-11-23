@@ -27,6 +27,11 @@ EBOOT.BIN
 *.psarc
 PS3_GAME/
 USRDIR/
+BCUS98106/
+NPEA*/
+NPUA*/
+BCES*/
+BCUS*/
 
 # Metadados locais
 .DS_Store
@@ -41,3 +46,17 @@ Thumbs.db
 /integration/native/logs/
 *.ELF
 *.BIN
+
+# Código e metadados levantados localmente (gerados sob demanda)
+recomp/src_recomp_*/
+recomp/spu_*/
+recomp/meta_*/
+recomp/*_106*
+src/recomp/
+src/spu_gen/
+meta/
+*.json.bak
+*.log
+run_test.ps1
+run_test_err.log
+scratch/
