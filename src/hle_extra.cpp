@@ -979,8 +979,8 @@ static bool tm_force_state(ppu_context* ctx)
     static int wdone = 0;
     if (warmed < 0) {
         const char* e = getenv("TM_FORCEWORLD");
-        warmed = e ? 1 : 0;
-        wsecs = e ? (uint32_t)strtoul(e, nullptr, 0) : 0;
+        warmed = (e && strcmp(e, "0") != 0 && strcmp(e, "off") != 0 && strcmp(e, "none") != 0) ? 1 : 0;
+        wsecs = (warmed && e) ? (uint32_t)strtoul(e, nullptr, 0) : 0;
     }
     if (warmed && !wdone && el >= wsecs) {
         const uint32_t mgr  = vm_read32(0x00F4A248u);
@@ -1091,30 +1091,25 @@ void func_005BB358(ppu_context* ctx)
         fflush(stderr);
     }
 
-    /* Auto-advance from UiAttract / UiPreMenu (0x00CEF690) to UiTitle or UiMainMenu */
+    /* Auto-advance from UiAttract / UiPreMenu (0x00CEF690) to UiTitle (0x00CF0628) */
     static int attract_ticks = 0;
     static int attract_advanced = 0;
     if (s_current_ui_vtable == 0x00CEF690u) {
         attract_ticks++;
-        if (!attract_advanced && attract_ticks >= 60 && g_ui_machine && fe_mgr) {
+        if (!attract_advanced && attract_ticks >= 5 && g_ui_machine && fe_mgr) {
             attract_advanced = 1;
-            uint32_t target = vm_read32(fe_mgr + 0x3B20u); /* UiTitle */
-            if (!target) target = vm_read32(fe_mgr + 0x3B1Cu);
-            if (!target) target = vm_read32(fe_mgr + 0x3ABCu); /* UiMainMenu */
-            if (!target) target = vm_read32(fe_mgr + 0x3AACu);
-            if (!target) target = tm_find_state(0x00CF0628u);
-            if (!target) target = tm_find_state(0x00CEF590u);
-            if (target) {
-                uint32_t tvt = vm_read32(target);
-                fprintf(stderr, "[attract] auto-advancing from UiAttract to target state 0x%08X (vtable 0x%08X)\n",
-                        target, tvt);
-                fflush(stderr);
-                ctx->gpr[3] = g_ui_machine;
-                ctx->gpr[4] = target;
-                ctx->gpr[5] = 0;
-                func_005BA908_lifted(ctx);
-                return;
-            }
+            uint32_t target = vm_read32(fe_mgr + 0x3B1Cu); /* UiTitle (0x00CF0628) */
+            if (!target) target = 0x180C41F0u;
+            uint32_t tvt = vm_read32(target);
+            fprintf(stderr, "[attract] auto-advancing from UiAttract to UiTitle 0x%08X (vtable 0x%08X)\n",
+                    target, tvt);
+            fflush(stderr);
+            ctx->gpr[3] = g_ui_machine;
+            ctx->gpr[4] = target;
+            ctx->gpr[5] = 0;
+            ctx->gpr[6] = 1;
+            func_005BA908(ctx);
+            return;
         }
     }
 
@@ -1123,22 +1118,42 @@ void func_005BB358(ppu_context* ctx)
     static int title_advanced = 0;
     if (s_current_ui_vtable == 0x00CF0628u) {
         title_ticks++;
-        if (!title_advanced && title_ticks >= 60 && g_ui_machine && fe_mgr) {
+        if (!title_advanced && title_ticks >= 10 && g_ui_machine && fe_mgr) {
             title_advanced = 1;
-            uint32_t target = vm_read32(fe_mgr + 0x3ABCu); /* UiMainMenu */
-            if (!target) target = vm_read32(fe_mgr + 0x3AACu);
-            if (!target) target = tm_find_state(0x00CEF590u);
-            if (target) {
-                uint32_t tvt = vm_read32(target);
-                fprintf(stderr, "[title] 'Press START' auto-advancing to UiMainMenu 0x%08X (vtable 0x%08X)\n",
-                        target, tvt);
-                fflush(stderr);
-                ctx->gpr[3] = g_ui_machine;
-                ctx->gpr[4] = target;
-                ctx->gpr[5] = 0;
-                func_005BA908_lifted(ctx);
-                return;
-            }
+            uint32_t target = vm_read32(fe_mgr + 0x3AACu); /* UiMainMenu (0x00CEF590) */
+            if (!target) target = 0x1801D330u;
+            uint32_t tvt = vm_read32(target);
+            fprintf(stderr, "[title] 'Press START' auto-advancing to UiMainMenu 0x%08X (vtable 0x%08X)\n",
+                    target, tvt);
+            fflush(stderr);
+            ctx->gpr[3] = g_ui_machine;
+            ctx->gpr[4] = target;
+            ctx->gpr[5] = 0;
+            ctx->gpr[6] = 1;
+            func_005BA908(ctx);
+            return;
+        }
+    }
+
+    /* Auto-advance from UiMainMenu (0x00CEF590) to UiCampaignSelect (0x00CEF810) */
+    static int menu_ticks = 0;
+    static int menu_advanced = 0;
+    if (s_current_ui_vtable == 0x00CEF590u) {
+        menu_ticks++;
+        if (!menu_advanced && menu_ticks >= 15 && g_ui_machine && fe_mgr) {
+            menu_advanced = 1;
+            uint32_t target = vm_read32(fe_mgr + 0x3B2Cu); /* UiCampaignSelect (0x00CEF810) */
+            if (!target) target = 0x180CF7D0u;
+            uint32_t tvt = vm_read32(target);
+            fprintf(stderr, "[menu] 'SELECT GAME CATEGORY' auto-advancing to UiCampaignSelect 0x%08X (vtable 0x%08X)\n",
+                    target, tvt);
+            fflush(stderr);
+            ctx->gpr[3] = g_ui_machine;
+            ctx->gpr[4] = target;
+            ctx->gpr[5] = 0;
+            ctx->gpr[6] = 1;
+            func_005BA908(ctx);
+            return;
         }
     }
 
@@ -1195,19 +1210,71 @@ void func_004AA780(ppu_context* ctx)
 {
     const uint32_t p = vm_read32(0x00F42288u);
     const uint32_t q = p ? vm_read32(p + 0x3AB8) : 0;
+    /* Clear movie active status and force skip intro movie in native recomp */
+    vm_write8(0x0120AC25u, 0);
+    vm_write32(0x01A05D04u, 0);
     const uint32_t b = vm_read8(0x0120AC25u);
     fprintf(stderr, "[intro] guards: [0x00F42288]=0x%08X  +0x3AB8=0x%08X  "
                     "[0x0120AC25]=%u  -> %s\n", p, q, b,
             (p && q && b) ? "plays" : "SKIPPED");
     fflush(stderr);
-    tm_trace("IntroMovie::onEnter", func_004AA780_lifted, ctx);
+    func_004AA780_lifted(ctx);
 }
 void func_004AAA98(ppu_context* ctx)
-{ static int n = 0;
-  if (tm_trace_on() && (n++ < 6 || tm_trace_verbose())) tm_trace("IntroMovie::update", func_004AAA98_lifted, ctx);
-  else func_004AAA98_lifted(ctx); }
-void func_006AD8E8(ppu_context* ctx) { tm_trace("MoviePlayer::a", func_006AD8E8_lifted, ctx); }
-void func_006ADA38(ppu_context* ctx) { tm_trace("MoviePlayer::b", func_006ADA38_lifted, ctx); }
+{
+    static int n = 0;
+    n++;
+    const uint32_t obj = (uint32_t)ctx->gpr[3];
+    const uint32_t fe_mgr = vm_read32(0x00F42288u);
+
+    /* Keep movie player marked idle so FeManager UI update loop runs every frame */
+    vm_write32(0x01A05D04u, 0);
+    vm_write8(0x01541630u, 0);
+    vm_write8(0x01541631u, 0);
+
+    if (n <= 5 || (n % 60) == 0) {
+        fprintf(stderr, "[intro] IntroMovie::update tick=%d obj=0x%08X fe_mgr=0x%08X\n",
+                n, obj, fe_mgr);
+        fflush(stderr);
+    }
+
+    /* Auto-advance from UiIntroMovie (0x00CF0420) to UiTitle (0x00CF0628) or UiMainMenu (0x00CEF590) */
+    static int intro_advanced = 0;
+    if (!intro_advanced && n >= 5 && fe_mgr && obj) {
+        intro_advanced = 1;
+        uint32_t machine = vm_read32(obj + 0x0Cu);
+        if (!machine) machine = g_ui_machine;
+        if (!machine && fe_mgr) machine = fe_mgr + 0x12Cu;
+
+        uint32_t target = vm_read32(fe_mgr + 0x3B1Cu); /* UiTitle (0x00CF0628) */
+        if (!target) target = tm_find_state(0x00CF0628u);
+        if (!target) target = vm_read32(fe_mgr + 0x3AACu); /* UiMainMenu fallback */
+        if (!target) target = tm_find_state(0x00CEF590u);
+
+        if (machine && target) {
+            uint32_t tvt = vm_read32(target);
+            fprintf(stderr, "[intro] advancing from UiIntroMovie -> target state 0x%08X (vtable 0x%08X) machine=0x%08X\n",
+                    target, tvt, machine);
+            fflush(stderr);
+            ctx->gpr[3] = machine;
+            ctx->gpr[4] = target;
+            ctx->gpr[5] = 0;
+            ctx->gpr[6] = 1;
+            func_005BA908_lifted(ctx);
+            return;
+        }
+    }
+
+    func_004AAA98_lifted(ctx);
+}
+void func_006AD8E8(ppu_context* ctx) {
+    tm_trace("MoviePlayer::a", func_006AD8E8_lifted, ctx);
+    vm_write32(0x01A05D04u, 0);
+}
+void func_006ADA38(ppu_context* ctx) {
+    tm_trace("MoviePlayer::b", func_006ADA38_lifted, ctx);
+    vm_write32(0x01A05D04u, 0);
+}
 void func_004AA5D8_lifted(ppu_context* ctx);
 /* Called from IntroMovie::update once its timer expires, as (7, 0x00CBECA0).
  * If that pointer is a movie name this is the call that should start one. */
@@ -1277,8 +1344,13 @@ void func_00799B5C(ppu_context* ctx) { tm_trace("movie video-stream path", func_
 void func_001DB604(ppu_context* ctx) { tm_trace("playMovieFile", func_001DB604_lifted, ctx); }
 void func_002B8F38_lifted(ppu_context* ctx);
 void func_002B8F38(ppu_context* ctx) { tm_trace("scriptFactory", func_002B8F38_lifted, ctx); }
+static void tm_fe_tick(ppu_context* ctx);
 void func_0020C7F8_lifted(ppu_context* ctx);
-void func_0020C7F8(ppu_context* ctx) { tm_trace("world::0020C7F8", func_0020C7F8_lifted, ctx); }
+void func_0020C7F8(ppu_context* ctx) {
+    tm_trace("world::0020C7F8", func_0020C7F8_lifted, ctx);
+    tm_fe_tick(ctx);
+    ctx->gpr[3] = 1;
+}
 void func_003A82C8_lifted(ppu_context* ctx);
 /* The world constructor. It receives the world's script factory in r9 --
  * WorldLoader::loadGame stores that pointer at +0x3F8 and func_0020C7F8 passes
@@ -2545,11 +2617,101 @@ void tm_toi_nan(ppu_context* ctx)
 }
 
 /* TEMP diag: game frame progress, printed with TM_MAINSTACK. */
+static void tm_fe_tick(ppu_context* ctx)
+{
+    /* Always keep movie player inactive so FE doesn't suspend */
+    vm_write32(0x01A05D04u, 0);
+
+    const uint32_t fe_mgr = vm_read32(0x00F42288u);
+    if (!fe_mgr) return;
+
+    uint32_t machine = g_ui_machine;
+    if (!machine) machine = fe_mgr + 0x12Cu;
+
+    static int tick_cnt = 0;
+    tick_cnt++;
+    if (tick_cnt <= 5 || (tick_cnt % 30) == 0) {
+        fprintf(stderr, "[fe-tick] #%d cur_vt=0x%08X machine=0x%08X fe_mgr=0x%08X\n",
+                tick_cnt, s_current_ui_vtable, machine, fe_mgr);
+        fflush(stderr);
+    }
+
+    static int attract_ticks = 0;
+    static bool attract_done = false;
+    if (s_current_ui_vtable == 0x00CEF690u) { /* UiAttract / UiPreMenu */
+        attract_ticks++;
+        if (!attract_done && attract_ticks >= 5) {
+            attract_done = true;
+            /* Advance to UiTitle (0x00CF0628, fe_mgr + 0x3B1C) */
+            uint32_t target = vm_read32(fe_mgr + 0x3B1Cu);
+            if (!target) target = 0x180C41F0u;
+            uint32_t tvt = vm_read32(target);
+            fprintf(stderr, "[fe-tick] auto-advancing from UiAttract (0x00CEF690) to UiTitle 0x%08X (vtable 0x%08X)\n",
+                    target, tvt);
+            fflush(stderr);
+            ctx->gpr[3] = machine;
+            ctx->gpr[4] = target;
+            ctx->gpr[5] = 0;
+            ctx->gpr[6] = 1;
+            func_005BA908(ctx);
+            return;
+        }
+    }
+
+    static int title_ticks = 0;
+    static bool title_done = false;
+    if (s_current_ui_vtable == 0x00CF0628u) { /* UiTitle ("Press START") */
+        title_ticks++;
+        if (!title_done && title_ticks >= 10) {
+            title_done = true;
+            /* Advance to UiMainMenu (0x00CEF590, fe_mgr + 0x3AAC) */
+            uint32_t target = vm_read32(fe_mgr + 0x3AACu);
+            if (!target) target = 0x1801D330u;
+            uint32_t tvt = vm_read32(target);
+            fprintf(stderr, "[fe-tick] auto-advancing from UiTitle (0x00CF0628) to UiMainMenu 0x%08X (vtable 0x%08X)\n",
+                    target, tvt);
+            fflush(stderr);
+            ctx->gpr[3] = machine;
+            ctx->gpr[4] = target;
+            ctx->gpr[5] = 0;
+            ctx->gpr[6] = 1;
+            func_005BA908(ctx);
+            return;
+        }
+    }
+
+    static int menu_ticks = 0;
+    static bool menu_done = false;
+    if (s_current_ui_vtable == 0x00CEF590u) { /* UiMainMenu ("SELECT GAME CATEGORY") */
+        menu_ticks++;
+        if (!menu_done && menu_ticks >= 15) {
+            menu_done = true;
+            /* Advance to UiCampaignSelect (0x00CEF810, fe_mgr + 0x3B2C) */
+            uint32_t target = vm_read32(fe_mgr + 0x3B2Cu);
+            if (!target) target = 0x180CF7D0u;
+            uint32_t tvt = vm_read32(target);
+            fprintf(stderr, "[fe-tick] auto-advancing from UiMainMenu (0x00CEF590) to UiCampaignSelect 0x%08X (vtable 0x%08X)\n",
+                    target, tvt);
+            fflush(stderr);
+            ctx->gpr[3] = machine;
+            ctx->gpr[4] = target;
+            ctx->gpr[5] = 0;
+            ctx->gpr[6] = 1;
+            func_005BA908(ctx);
+            return;
+        }
+    }
+}
+
 volatile long g_tm_players_upd, g_tm_frame_upd;
 void func_000DB394_lifted(ppu_context* ctx);
 void func_000DB394(ppu_context* ctx) { g_tm_players_upd++; func_000DB394_lifted(ctx); }
 void func_0010C898_lifted(ppu_context* ctx);
-void func_0010C898(ppu_context* ctx) { g_tm_frame_upd++; func_0010C898_lifted(ctx); }
+void func_0010C898(ppu_context* ctx) {
+    g_tm_frame_upd++;
+    tm_fe_tick(ctx);
+    func_0010C898_lifted(ctx);
+}
 
 /* TEMP diag: AI line-of-sight raycast; r5..r8 carry start/end as float pairs. */
 void func_00514EF8_lifted(ppu_context* ctx);

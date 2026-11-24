@@ -644,7 +644,7 @@ int main(int argc, char** argv)
     if (!getenv("TM_JQ_WORKERS"))      _putenv("TM_JQ_WORKERS=4");
     if (!getenv("TM_LOADDONE"))        _putenv("TM_LOADDONE=5");
     if (!getenv("TM_VIDEO_MODES"))     _putenv("TM_VIDEO_MODES=2,1");
-    if (!getenv("TM_FORCEWORLD"))      _putenv("TM_FORCEWORLD=5,menu");
+    /* TM_FORCEWORLD disabled: let the Front-End state machine progress naturally */
     if (!getenv("TM_RSX_W"))           _putenv("TM_RSX_W=1280");
     if (!getenv("TM_RSX_H"))           _putenv("TM_RSX_H=720");
 #endif

@@ -26,10 +26,13 @@ def main():
     env["TM_JQ_WORKERS"] = "4"
     env["TM_LOADDONE"] = os.environ.get("TM_LOADDONE", "15")
     env["TM_VIDEO_MODES"] = "2,1"
-    if "TM_FORCEWORLD" in os.environ:
-        env["TM_FORCEWORLD"] = os.environ["TM_FORCEWORLD"]
-    if "TM_FORCESTATE" in os.environ:
-        env["TM_FORCESTATE"] = os.environ["TM_FORCESTATE"]
+    # Do not inherit stale TM_FORCEWORLD or TM_FORCESTATE unless explicitly requested with TM_FORCE_ENABLE=1
+    if os.environ.get("TM_FORCE_ENABLE") == "1":
+        if "TM_FORCEWORLD" in os.environ: env["TM_FORCEWORLD"] = os.environ["TM_FORCEWORLD"]
+        if "TM_FORCESTATE" in os.environ: env["TM_FORCESTATE"] = os.environ["TM_FORCESTATE"]
+    else:
+        env.pop("TM_FORCEWORLD", None)
+        env.pop("TM_FORCESTATE", None)
     env["TM_RSX_W"] = "1280"
     env["TM_RSX_H"] = "720"
     env["TM_LIVE_DUMP"] = "1"
