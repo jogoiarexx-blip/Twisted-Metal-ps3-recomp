@@ -12,7 +12,8 @@ Este diretório contém os metadados de análise, tabelas de despacho HLE e mode
 
 * **`twistedmetal.exe` (NA RAIZ DO REPOSITÓRIO):**
   É o **executável real e completo** do jogo, contendo todas as 38.229 funções PPU recompiladas, 11 imagens SPU embutidas, pipeline DirectX 12 RSX funcional e áudio BoomRangBuss.
-  > Para rodar o jogo real, use **`RODAR-JOGO.cmd`** ou **`run_twistedmetal.ps1`** na pasta raiz.
+  > Para rodar o jogo real, use **`INICIAR_TWISTED_METAL.bat`**, **`RODAR-JOGO.cmd`** ou **`run_twistedmetal.ps1`** na pasta raiz.
+  > Para verificar o diagnóstico do boot probe, utilize **`VERIFICAR_BOOT.bat`**. As DLLs de runtime (`libstdc++-6.dll`, `libgcc_s_seh-1.dll`, `libwinpthread-1.dll`) estão incluídas na raiz.
 
 ---
 

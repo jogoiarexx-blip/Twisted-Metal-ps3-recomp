@@ -35,12 +35,23 @@ O jogo **inicializa em código nativo x86-64**, carrega a engine TMX, inicializa
 ### Executando em 1 Clique
 Basta dar dois cliques em:
 ```cmd
-RODAR-JOGO.cmd
+INICIAR_TWISTED_METAL.bat
 ```
+*(ou se preferir: `RODAR-JOGO.cmd`)*
+
 Ou executar pelo PowerShell:
 ```powershell
 .\run_twistedmetal.ps1
 ```
+
+### Controles (Teclado e Controle)
+O módulo de entrada (`cellPad`) mapeia nativamente o teclado de PC e controles XInput:
+- **Direcionais / Volante:** `W`, `A`, `S`, `D` e Setas do teclado.
+- **Acelerar (R2):** `W`, `Seta para Cima` ou `Shift Direito`.
+- **Frear / Ré (L2):** `S`, `Seta para Baixo` ou `Shift Esquerdo`.
+- **Confirmar / Pular Vídeo (Cross / Start):** `Espaço`, `Enter`, `E`, `Z`.
+- **Voltar / Cancelar (Circle):** `Esc`, `Backspace`, `X`.
+- **Controle:** Plug-and-play compatível com controle de Xbox/PlayStation via XInput.
 
 O launcher configura automaticamente as variáveis de ambiente otimizadas:
 ```powershell
