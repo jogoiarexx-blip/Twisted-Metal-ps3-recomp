@@ -15,7 +15,7 @@ $env:TM_FORCEWORLD = "15,direct"
 $env:TM_LIVE_DUMP = "1"
 $env:LD_FRAME_DUMP = "D:\Twisted metal\dumps"
 $env:LD_FRAME_DUMP_EVERY = "10"
-$env:LD_FRAME_DUMP_FROM = "200"
+$env:LD_FRAME_DUMP_FROM = "10"
 
 Remove-Item -Path "D:\Twisted metal\dumps\*.ppm" -Force -ErrorAction SilentlyContinue
 if (-not (Test-Path "D:\Twisted metal\dumps")) {
@@ -27,7 +27,7 @@ $exe = "D:\Twisted metal\twistedmetal.exe"
 
 $p = Start-Process -FilePath $exe -ArgumentList "`"$elf`"" -WorkingDirectory "D:\Twisted metal" -PassThru -RedirectStandardOutput "D:\Twisted metal\test_advance_out.log" -RedirectStandardError "D:\Twisted metal\test_advance_err.log"
 
-Start-Sleep -Seconds 45
+Start-Sleep -Seconds 30
 
 if (-not $p.HasExited) {
     Stop-Process -Id $p.Id -Force
