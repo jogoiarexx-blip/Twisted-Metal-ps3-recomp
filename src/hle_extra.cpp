@@ -105,6 +105,17 @@ static void tm_jq_push_job(ppu_context* ctx);
 extern "C" ppu_context* g_tm_postfx_ctx = nullptr;   /* TEMP: SpuPostFX thread (generated code) */
 #pragma comment(linker, "/alternatename:g_tm_postfx_ctx=?g_tm_postfx_ctx@@3PEAUppu_context@@EA")
 static void tm_jq_sync(ppu_context* ctx);
+static void tm_jq_port_sync(ppu_context* ctx);
+static void tm_jq_port_try_sync(ppu_context* ctx);
+static void tm_cellSpursCreateJobQueue(ppu_context* ctx);
+static void tm_cellSpursJobQueueAttributeSetMaxSizeJobDescriptor(ppu_context* ctx);
+static void tm_cellSpursJobQueuePortInitialize(ppu_context* ctx);
+static void tm_cellSpursGetJobQueueId(ppu_context* ctx);
+static void tm_cellSpursJobQueuePortPushFlush(ppu_context* ctx);
+static void tm_cellSpursShutdownJobQueue(ppu_context* ctx);
+static void tm_cellSpursJoinJobQueue(ppu_context* ctx);
+static void tm_cellSpursJobQueuePortFinalize(ppu_context* ctx);
+static void tm_sceNp2Init(ppu_context* ctx);
 static void tm_cellSpursBarrierInitialize(ppu_context* ctx);
 static void tm_cellSpursGetTasksetInfo(ppu_context* ctx);
 
@@ -139,6 +150,17 @@ extern "C" void tm_hle_register_extra(void)
     ps3_hle_register_ctx(0x373523D4u, "cellSpursEventFlagWait", probe_EventFlagWait);
     ps3_hle_register_ctx(0x90E392CFu, "cellSpursJq push job", tm_jq_push_job);
     ps3_hle_register_ctx(0x9396BE1Du, "cellSpursJq sync", tm_jq_sync);
+    ps3_hle_register_ctx(0x634B1502u, "cellSpursJobQueuePortSync", tm_jq_port_sync);
+    ps3_hle_register_ctx(0x80A0264Cu, "cellSpursJobQueuePortTrySync", tm_jq_port_try_sync);
+    ps3_hle_register_ctx(0xF244E799u, "_cellSpursCreateJobQueue", tm_cellSpursCreateJobQueue);
+    ps3_hle_register_ctx(0x1686957Eu, "cellSpursJobQueueAttributeSetMaxSizeJobDescriptor", tm_cellSpursJobQueueAttributeSetMaxSizeJobDescriptor);
+    ps3_hle_register_ctx(0x3D1294FCu, "cellSpursJobQueuePortInitialize", tm_cellSpursJobQueuePortInitialize);
+    ps3_hle_register_ctx(0xC343EE10u, "cellSpursGetJobQueueId", tm_cellSpursGetJobQueueId);
+    ps3_hle_register_ctx(0xBD1C5D6Bu, "_cellSpursJobQueuePortPushFlush", tm_cellSpursJobQueuePortPushFlush);
+    ps3_hle_register_ctx(0x8C97A96Cu, "cellSpursShutdownJobQueue", tm_cellSpursShutdownJobQueue);
+    ps3_hle_register_ctx(0x8CE4CFFAu, "cellSpursJoinJobQueue", tm_cellSpursJoinJobQueue);
+    ps3_hle_register_ctx(0x26FA81B4u, "cellSpursJobQueuePortFinalize", tm_cellSpursJobQueuePortFinalize);
+    ps3_hle_register_ctx(0x41251F74u, "sceNp2Init", tm_sceNp2Init);
     ps3_hle_register_ctx(0x7FDF4FEFu, "cellSpursBarrierInitialize", tm_cellSpursBarrierInitialize);
     ps3_hle_register_ctx(0x9FCB567Bu, "cellSpursGetTasksetInfo",   tm_cellSpursGetTasksetInfo);
 }
@@ -2285,4 +2307,100 @@ static void tm_jq_sync(ppu_context* ctx)
         return true;
     });
     ctx->gpr[3] = 0;
+}
+
+static void tm_jq_port_sync(ppu_context* ctx)
+{
+    const uint32_t port = (uint32_t)ctx->gpr[3];
+    uint32_t jq = port ? vm_read32(port) : 0;
+    if (!jq) jq = port;
+
+    std::unique_lock<std::mutex> lk(s_jq_mx);
+    s_jq_done.wait(lk, [&] {
+        for (uint32_t t = 0; t < 16; t++)
+            if (s_jq_pending[((uint64_t)jq << 32) | t] > 0) return false;
+        return true;
+    });
+    ctx->gpr[3] = 0;
+}
+
+static void tm_jq_port_try_sync(ppu_context* ctx)
+{
+    const uint32_t port = (uint32_t)ctx->gpr[3];
+    uint32_t jq = port ? vm_read32(port) : 0;
+    if (!jq) jq = port;
+
+    std::unique_lock<std::mutex> lk(s_jq_mx);
+    for (uint32_t t = 0; t < 16; t++) {
+        if (s_jq_pending[((uint64_t)jq << 32) | t] > 0) {
+            ctx->gpr[3] = 0x80410A05; /* CELL_SPURS_JQ_ERROR_BUSY */
+            return;
+        }
+    }
+    ctx->gpr[3] = 0;
+}
+
+extern "C" int32_t cellSpursCreateJobQueue(void* spurs, void* jq, const void* attr, void* buffer, uint32_t bufferSize);
+
+static void tm_cellSpursCreateJobQueue(ppu_context* ctx)
+{
+    void* spurs = (void*)(uintptr_t)ctx->gpr[3];
+    void* jq    = (void*)(uintptr_t)ctx->gpr[4];
+    const void* attr = (const void*)(uintptr_t)ctx->gpr[5];
+    void* buffer = (void*)(uintptr_t)ctx->gpr[6];
+    uint32_t bufferSize = (uint32_t)ctx->gpr[7];
+    ctx->gpr[3] = (uint64_t)(int64_t)cellSpursCreateJobQueue(spurs, jq, attr, buffer, bufferSize);
+}
+
+static void tm_cellSpursJobQueueAttributeSetMaxSizeJobDescriptor(ppu_context* ctx)
+{
+    /* gpr[3] = attr EA, gpr[4] = size */
+    ctx->gpr[3] = 0; /* CELL_OK */
+}
+
+static void tm_cellSpursJobQueuePortInitialize(ppu_context* ctx)
+{
+    /* gpr[3] = jq EA, gpr[4] = port EA */
+    const uint32_t jq_ea   = (uint32_t)ctx->gpr[3];
+    const uint32_t port_ea = (uint32_t)ctx->gpr[4];
+    if (port_ea) {
+        vm_write32(port_ea, jq_ea);
+    }
+    ctx->gpr[3] = 0; /* CELL_OK */
+}
+
+static void tm_cellSpursGetJobQueueId(ppu_context* ctx)
+{
+    const uint32_t jq_ea = (uint32_t)ctx->gpr[3];
+    const uint32_t id_ea = (uint32_t)ctx->gpr[4];
+    if (id_ea) {
+        uint32_t qid = jq_ea ? vm_read32(jq_ea) : 0;
+        vm_write32(id_ea, qid);
+    }
+    ctx->gpr[3] = 0; /* CELL_OK */
+}
+
+static void tm_cellSpursJobQueuePortPushFlush(ppu_context* ctx)
+{
+    ctx->gpr[3] = 0; /* CELL_OK */
+}
+
+static void tm_cellSpursShutdownJobQueue(ppu_context* ctx)
+{
+    ctx->gpr[3] = 0; /* CELL_OK */
+}
+
+static void tm_cellSpursJoinJobQueue(ppu_context* ctx)
+{
+    ctx->gpr[3] = 0; /* CELL_OK */
+}
+
+static void tm_cellSpursJobQueuePortFinalize(ppu_context* ctx)
+{
+    ctx->gpr[3] = 0; /* CELL_OK */
+}
+
+static void tm_sceNp2Init(ppu_context* ctx)
+{
+    ctx->gpr[3] = 0; /* CELL_OK */
 }

@@ -579,7 +579,51 @@ static LONG WINAPI vm_commit_veh(EXCEPTION_POINTERS* ep)
 
 int main(int argc, char** argv)
 {
-    if (argc < 2) { printf("usage: %s <EBOOT.elf>\n", argv[0]); return 2; }
+#ifdef _WIN32
+    /* Enforce proven defaults for standalone and 1-click execution */
+    if (!getenv("RSX_LIVE_DRAW"))      _putenv("RSX_LIVE_DRAW=1");
+    if (!getenv("TM_TRACE"))           _putenv("TM_TRACE=0");
+    if (!getenv("GCM_SUBCH1_3D"))      _putenv("GCM_SUBCH1_3D=1");
+    if (!getenv("TM_GAMELOG"))         _putenv("TM_GAMELOG=1");
+    if (!getenv("PAD_AUTOPRESS"))      _putenv("PAD_AUTOPRESS=0");
+    if (!getenv("PAD_FORCE_FOCUS"))    _putenv("PAD_FORCE_FOCUS=1");
+    if (!getenv("TM_SKIP_BANKUNLOAD")) _putenv("TM_SKIP_BANKUNLOAD=1");
+    if (!getenv("TM_BRB_SILENT"))      _putenv("TM_BRB_SILENT=1");
+    if (!getenv("TM_BRB_PARK"))        _putenv("TM_BRB_PARK=1");
+    if (!getenv("TM_BRB_ACK"))         _putenv("TM_BRB_ACK=1");
+    if (!getenv("TM_JQ_WORKERS"))      _putenv("TM_JQ_WORKERS=4");
+    if (!getenv("TM_LOADDONE"))        _putenv("TM_LOADDONE=5");
+    if (!getenv("TM_VIDEO_MODES"))     _putenv("TM_VIDEO_MODES=2,1");
+    if (!getenv("TM_FORCEWORLD"))      _putenv("TM_FORCEWORLD=15,direct");
+    if (!getenv("TM_RSX_W"))           _putenv("TM_RSX_W=1280");
+    if (!getenv("TM_RSX_H"))           _putenv("TM_RSX_H=720");
+#endif
+
+    const char* elf_candidate = NULL;
+    if (argc >= 2) {
+        elf_candidate = argv[1];
+    } else {
+#ifdef _WIN32
+        static const char* search_paths[] = {
+            "EBOOT.elf",
+            "PS3_GAME\\USRDIR\\EBOOT.elf",
+            "..\\PS3_GAME\\USRDIR\\EBOOT.elf",
+            "E:\\01 jogos\\Emulador ps3\\01 roms\\twisted\\PS3_GAME\\USRDIR\\EBOOT.elf"
+        };
+        for (size_t i = 0; i < sizeof(search_paths)/sizeof(search_paths[0]); i++) {
+            DWORD attr = GetFileAttributesA(search_paths[i]);
+            if (attr != INVALID_FILE_ATTRIBUTES && !(attr & FILE_ATTRIBUTE_DIRECTORY)) {
+                elf_candidate = search_paths[i];
+                printf("[boot] Auto-selected EBOOT.elf: %s\n", elf_candidate);
+                break;
+            }
+        }
+#endif
+    }
+    if (!elf_candidate) {
+        printf("usage: %s <EBOOT.elf>\n", argv[0]);
+        return 2;
+    }
 
 #ifdef _WIN32
 #pragma comment(lib, "winmm.lib")
@@ -620,10 +664,10 @@ int main(int argc, char** argv)
 #endif
     if (!vm_base) { printf("vm alloc failed\n"); return 1; }
 
-    uint32_t entry = ppu_load_elf(argv[1]);
+    uint32_t entry = ppu_load_elf(elf_candidate);
     if (!entry) { printf("load failed\n"); return 1; }
 
-    derive_vfs_root(argv[1]);
+    derive_vfs_root(elf_candidate);
     printf("[boot] VFS root: %s\n", ppu_vfs_root);
 
     fprintf(stderr,"[boot-dbg] before ppu_recomp_register\n"); fflush(stderr);

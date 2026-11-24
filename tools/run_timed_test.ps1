@@ -29,7 +29,7 @@ $exe = "D:\Twisted metal\twistedmetal.exe"
 
 $p = Start-Process -FilePath $exe -ArgumentList "`"$elf`"" -WorkingDirectory "D:\Twisted metal" -PassThru -RedirectStandardOutput "D:\Twisted metal\test_advance_out.log" -RedirectStandardError "D:\Twisted metal\test_advance_err.log"
 
-Start-Sleep -Seconds 60
+Start-Sleep -Seconds 25
 
 if (-not $p.HasExited) {
     Stop-Process -Id $p.Id -Force
