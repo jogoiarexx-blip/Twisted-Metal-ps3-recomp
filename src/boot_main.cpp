@@ -412,7 +412,7 @@ static DWORD WINAPI vblank_ticker(LPVOID)
                     const uint32_t surfs = rsx_live_draw_get_surface_count();
                     static uint32_t last_shot_frame = 0;
                     const uint32_t cur_f = rsx_live_draw_get_frames();
-                    if (arena_shots < 5 && surfs >= 4 && cur_f != last_shot_frame) {
+                    if (arena_shots < 8 && surfs >= 4 && (cur_f >= last_shot_frame + 15 || last_shot_frame == 0)) {
                         last_shot_frame = cur_f;
                         arena_shots++;
                         struct { uint32_t loc; uint32_t off; } targets[] = {
@@ -675,6 +675,7 @@ int main(int argc, char** argv)
     { ULONG g=256*1024; SetThreadStackGuarantee(&g); }  /* reserve stack so the SO handler can run */
     signal(SIGABRT, tm_abort_handler);
     setvbuf(stdout, NULL, _IONBF, 0);   /* unbuffered: don't lose prints on kill */
+    setvbuf(stderr, NULL, _IONBF, 0);
 #endif
 
     /* Flat VM: one host buffer, guest addr -> vm_base + addr. This maps the

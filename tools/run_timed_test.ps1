@@ -4,6 +4,8 @@ $env:TM_GAMELOG = "1"
 $env:RSX_LIVE_DRAW = "1"
 $env:PAD_AUTOPRESS = "1"
 $env:PAD_FORCE_FOCUS = "1"
+$env:PAD_STICK = "128,0,128,128,25,65"
+$env:PAD_SCRIPT = "26:0x0200,28:0x0200,30:0x0200,32:0x0200,34:0x0400,36:0x0800,38:0x4000,42:0x0200,45:0x0400"
 $env:TM_SKIP_BANKUNLOAD = "1"
 $env:TM_BRB_SILENT = "1"
 $env:TM_BRB_PARK = "1"
@@ -32,7 +34,7 @@ $exe = "D:\Twisted metal\twistedmetal.exe"
 
 $p = Start-Process -FilePath $exe -ArgumentList "`"$elf`"" -WorkingDirectory "D:\Twisted metal" -PassThru -RedirectStandardOutput "D:\Twisted metal\test_advance_out.log" -RedirectStandardError "D:\Twisted metal\test_advance_err.log"
 
-Start-Sleep -Seconds 55
+Start-Sleep -Seconds 65
 
 if (-not $p.HasExited) {
     Stop-Process -Id $p.Id -Force

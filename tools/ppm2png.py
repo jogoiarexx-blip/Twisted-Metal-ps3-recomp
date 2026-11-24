@@ -59,7 +59,22 @@ def convert_ppm(src, dst):
     write_png(w, h, rgb_data, dst)
 
 if __name__ == '__main__':
-    if len(sys.argv) < 3:
-        print("Usage: ppm2png.py <src.ppm> <dst.png>")
+    if len(sys.argv) < 2:
+        print("Usage: ppm2png.py <src.ppm> <dst.png> OR ppm2png.py --batch <src_dir> <dst_dir>")
         sys.exit(1)
-    convert_ppm(sys.argv[1], sys.argv[2])
+    if sys.argv[1] == '--batch':
+        sdir = sys.argv[2]
+        ddir = sys.argv[3] if len(sys.argv) > 3 else sdir
+        os.makedirs(ddir, exist_ok=True)
+        count = 0
+        for f in os.listdir(sdir):
+            if f.endswith('.ppm'):
+                sp = os.path.join(sdir, f)
+                dp = os.path.join(ddir, os.path.splitext(f)[0] + '.png')
+                convert_ppm(sp, dp)
+                count += 1
+        print(f"Batch converted {count} PPM files to PNG.")
+    elif len(sys.argv) >= 3:
+        convert_ppm(sys.argv[1], sys.argv[2])
+    else:
+        print("Invalid arguments.")
