@@ -1,0 +1,45 @@
+{
+  "project": "Twisted Metal (2012) - Static Recompilation (PS3 to Windows x64 Native)",
+  "game_title_id": "BCUS98106",
+  "version": "1.00",
+  "native_target": "x86_64-pc-windows-msvc",
+  "timestamp": "2026-11-24T18:50:00Z",
+  "build_system": {
+    "generator": "Ninja",
+    "compiler": "clang-cl",
+    "cxx_standard": "C++20",
+    "c_standard": "C17",
+    "cmake_version": "3.20+"
+  },
+  "runtime_dependencies": {
+    "ps3recomp": "ydkj-master-bringup",
+    "graphics_api": "Direct3D 12 (RSX NV40 emulation pipeline)",
+    "audio_api": "BoomRangBuss (BRB) HLE host bridge",
+    "input_api": "XInput / cellPad keyboard mapping"
+  },
+  "recompilation_metrics": {
+    "ppu_functions_lifted": 38229,
+    "ppu_symbols_mapped": 47106,
+    "ppu_cpp_chunks": 12,
+    "ppu_source_size_bytes": 487771746,
+    "spu_embedded_images": 11,
+    "spu_jobqueue_workloads": 15
+  },
+  "display_configuration": {
+    "internal_width": 1280,
+    "internal_height": 704,
+    "display_width": 1280,
+    "display_height": 720,
+    "viewport_blit": "NV3089 Scaled Blit with aspect correction"
+  },
+  "milestones": {
+    "current_milestone": "M05 - Front-End Main Menu Navigation & Category Selection",
+    "verified_states": [
+      "M01 - Reproducible Clean Build",
+      "M02 - Native Boot & Memory Setup",
+      "M03 - Legal Screen Carousel & Video Skip",
+      "M04 - Attract / PreMenu & Title Screen",
+      "M05 - Main Menu Category Selection ('SELECT GAME CATEGORY')"
+    ]
+  }
+}
