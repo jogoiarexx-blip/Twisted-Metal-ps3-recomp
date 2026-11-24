@@ -1,4 +1,4 @@
-$env:TM_TRACE = "1"
+$env:TM_TRACE = "0"
 $env:GCM_SUBCH1_3D = "1"
 $env:TM_GAMELOG = "1"
 $env:RSX_LIVE_DRAW = "1"
@@ -12,6 +12,8 @@ $env:TM_JQ_WORKERS = "4"
 $env:TM_LOADDONE = "5"
 $env:TM_VIDEO_MODES = "2,1"
 $env:TM_FORCEWORLD = "15,direct"
+$env:TM_RSX_W = "1280"
+$env:TM_RSX_H = "720"
 $env:TM_LIVE_DUMP = "1"
 $env:LD_FRAME_DUMP = "D:\Twisted metal\dumps"
 $env:LD_FRAME_DUMP_EVERY = "10"
@@ -27,7 +29,7 @@ $exe = "D:\Twisted metal\twistedmetal.exe"
 
 $p = Start-Process -FilePath $exe -ArgumentList "`"$elf`"" -WorkingDirectory "D:\Twisted metal" -PassThru -RedirectStandardOutput "D:\Twisted metal\test_advance_out.log" -RedirectStandardError "D:\Twisted metal\test_advance_err.log"
 
-Start-Sleep -Seconds 30
+Start-Sleep -Seconds 60
 
 if (-not $p.HasExited) {
     Stop-Process -Id $p.Id -Force
