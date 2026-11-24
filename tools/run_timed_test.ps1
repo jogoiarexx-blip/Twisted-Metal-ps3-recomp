@@ -20,6 +20,9 @@ $env:LD_FRAME_DUMP_EVERY = "10"
 $env:LD_FRAME_DUMP_FROM = "10"
 
 Remove-Item -Path "D:\Twisted metal\dumps\*.ppm" -Force -ErrorAction SilentlyContinue
+Remove-Item -Path "D:\Twisted metal\surf_world_*.ppm" -Force -ErrorAction SilentlyContinue
+Remove-Item -Path "D:\Twisted metal\surf_3d_arena_*.ppm" -Force -ErrorAction SilentlyContinue
+Remove-Item -Path "D:\Twisted metal\surf_arena_*.ppm" -Force -ErrorAction SilentlyContinue
 if (-not (Test-Path "D:\Twisted metal\dumps")) {
     New-Item -ItemType Directory -Path "D:\Twisted metal\dumps" -Force | Out-Null
 }
@@ -29,7 +32,7 @@ $exe = "D:\Twisted metal\twistedmetal.exe"
 
 $p = Start-Process -FilePath $exe -ArgumentList "`"$elf`"" -WorkingDirectory "D:\Twisted metal" -PassThru -RedirectStandardOutput "D:\Twisted metal\test_advance_out.log" -RedirectStandardError "D:\Twisted metal\test_advance_err.log"
 
-Start-Sleep -Seconds 25
+Start-Sleep -Seconds 55
 
 if (-not $p.HasExited) {
     Stop-Process -Id $p.Id -Force

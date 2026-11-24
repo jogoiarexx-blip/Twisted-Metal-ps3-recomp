@@ -10,4 +10,4 @@ function Convert-BmpToPng($bmp, $png) {
 }
 
 $dir = "C:\Users\luis\.gemini\antigravity\brain\e0d02404-d211-4bb2-807a-b2befe488b48"
-Convert-BmpToPng "$dir\frame_latest_190.bmp" "$dir\frame_latest_190.png"
+Convert-BmpToPng "$dir\surf_world_00010000.bmp" "$dir\surf_world_00010000.png"

@@ -173,7 +173,10 @@ extern "C" int  rsx_d3d12_backend_init(uint32_t w, uint32_t h, const char* title
 extern "C" void rsx_d3d12_backend_present(void);
 extern "C" int  rsx_d3d12_backend_pump_messages(void);
 extern "C" void cellGcm_rsx_process_fifo(void);   /* cellGcmSys.c: drain get->put */
+extern "C" int  cellGcm_take_flip_pending(void);
 extern "C" int  cellGcm_take_flip_pending_synced(void);
+extern "C" uint32_t cellGcm_flip_request_count(void);
+extern "C" uint32_t cellGcm_control_guest_addr(void);
 
 /* Live NV4097->D3D12 engine (libs/video/rsx_live_draw.c, from caner /
  * canersaka's Yakuza: Dead Souls port). Selected with RSX_LIVE_DRAW=1. It
@@ -193,6 +196,7 @@ extern "C" uint32_t cellGcmResolveLocated(int local, uint32_t offset);
 extern "C" uint32_t cellGcmResolveIO(uint32_t offset);
 extern "C" uint32_t rsx_live_draw_get_frames(void);
 extern "C" uint32_t rsx_live_draw_get_last_draws(void);
+extern "C" uint32_t rsx_live_draw_get_surface_count(void);
 extern "C" void     rsx_live_draw_flush(void);
 extern "C" void     rsx_live_draw_present(uint32_t buffer_id);
 extern "C" uint32_t cellGcmGetCurrentDisplayBufferId(void);
@@ -345,7 +349,7 @@ static DWORD WINAPI vblank_ticker(LPVOID)
                      * take_flip_pending_synced() is true only once the drain has
                      * consumed everything up to put, i.e. the FIFO holds exactly
                      * one completed frame. */
-                    const int flipped = cellGcm_take_flip_pending_synced();
+                    const int flipped = cellGcm_take_flip_pending();
                     /* Dump BEFORE presenting. At this point the FIFO has been
                      * drained to put, so the frame's draws are complete and the
                      * next frame has not cleared anything yet -- every earlier
@@ -404,6 +408,28 @@ static DWORD WINAPI vblank_ticker(LPVOID)
                           fflush(stderr);
                       } }
                     if (flipped) rsx_live_draw_present(cellGcmGetCurrentDisplayBufferId());
+                    static int arena_shots = 0;
+                    const uint32_t surfs = rsx_live_draw_get_surface_count();
+                    static uint32_t last_shot_frame = 0;
+                    const uint32_t cur_f = rsx_live_draw_get_frames();
+                    if (arena_shots < 5 && surfs >= 4 && cur_f != last_shot_frame) {
+                        last_shot_frame = cur_f;
+                        arena_shots++;
+                        struct { uint32_t loc; uint32_t off; } targets[] = {
+                            { 0, 0x01190000u }, { 0, 0x00556000u }, { 0, 0x00010000u },
+                            { 0, 0x00AB0000u }, { 0, 0x01870000u }, { 0, 0x01BE0000u },
+                            { 1, 0x007E2A80u }, { 1, 0x00472A80u }, { 1, 0x00B52A80u }
+                        };
+                        fprintf(stderr, "[live] 3D ARENA DUMP #%d (surfaces=%u, frames=%u, draws=%u, cur_buf=%u)\n",
+                                arena_shots, surfs, cur_f, rsx_live_draw_get_last_draws(),
+                                cellGcmGetCurrentDisplayBufferId());
+                        for (unsigned k = 0; k < sizeof targets / sizeof targets[0]; k++) {
+                            char path[64];
+                            snprintf(path, sizeof path, "surf_arena_%d_%u_%08X.ppm", arena_shots, targets[k].loc, targets[k].off);
+                            rsx_live_draw_debug_dump_surface(targets[k].loc, targets[k].off, path);
+                        }
+                        fflush(stderr);
+                    }
                     /* TM_LIVE_DUMP=<secs>,<hex offset>: ask the engine to write
                      * one of its tracked surfaces out, so "is it drawing" is
                      * answerable from its own resources rather than a readback
@@ -416,9 +442,16 @@ static DWORD WINAPI vblank_ticker(LPVOID)
                     const ULONGLONG now = GetTickCount64();
                     if (now - last >= 2000) {
                         last = now;
-                        fprintf(stderr, "[live] frames=%u last_draws=%u\n",
+                        uint32_t ca = cellGcm_control_guest_addr();
+                        uint32_t p = vm_read32(ca + 0);
+                        uint32_t g = vm_read32(ca + 4);
+                        uint32_t r = vm_read32(ca + 8);
+                        fprintf(stderr, "[live] frames=%u last_draws=%u flip_reqs=%u cur_buf=%u put=0x%08X get=0x%08X ref=0x%08X\n",
                                 rsx_live_draw_get_frames(),
-                                rsx_live_draw_get_last_draws());
+                                rsx_live_draw_get_last_draws(),
+                                cellGcm_flip_request_count(),
+                                cellGcmGetCurrentDisplayBufferId(),
+                                p, g, r);
                         fflush(stderr);
                     }
                 }
