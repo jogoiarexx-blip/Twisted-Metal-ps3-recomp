@@ -36,6 +36,7 @@ void     tm_ef_kick_tick(void);         /* src/hle_extra.cpp */
 void     tm_loaddone_tick(void);        /* src/hle_extra.cpp */
 void     tm_fifowatch_tick(void);       /* src/hle_extra.cpp */
 void     tm_memdump_tick(void);         /* src/hle_extra.cpp */
+void     tm_install_syscall_hooks(void);/* src/hle_extra.cpp */
 int      ppu_run(uint32_t entry_opd, uint32_t stack_top);
 extern const char* ppu_vfs_root;   /* host dir that PS3 mount points map into */
 /* Optional hook: load real system PRX modules (libsre = cellSpurs/cellSync) into
@@ -430,6 +431,22 @@ static DWORD WINAPI vblank_ticker(LPVOID)
                         }
                         fflush(stderr);
                     }
+                    static uint32_t last_menu_shot_frame = 0;
+                    static int menu_shot_idx = 0;
+                    if (surfs >= 4 && cur_f >= 150 && (cur_f >= last_menu_shot_frame + 150)) {
+                        last_menu_shot_frame = cur_f;
+                        menu_shot_idx++;
+                        struct { uint32_t loc; uint32_t off; } menu_targets[] = {
+                            { 0, 0x01190000u }, { 0, 0x00010000u }, { 0, 0x00AB0000u }, { 0, 0x01870000u }, { 0, 0x01BE0000u }
+                        };
+                        fprintf(stderr, "[live] MENU SCREEN DUMP #%d (frames=%u)\n", menu_shot_idx, cur_f);
+                        for (unsigned k = 0; k < sizeof menu_targets / sizeof menu_targets[0]; k++) {
+                            char path[64];
+                            snprintf(path, sizeof path, "surf_menu_%d_%08X.ppm", menu_shot_idx, menu_targets[k].off);
+                            rsx_live_draw_debug_dump_surface(menu_targets[k].loc, menu_targets[k].off, path);
+                        }
+                        fflush(stderr);
+                    }
                     /* TM_LIVE_DUMP=<secs>,<hex offset>: ask the engine to write
                      * one of its tracked surfaces out, so "is it drawing" is
                      * answerable from its own resources rather than a readback
@@ -627,7 +644,7 @@ int main(int argc, char** argv)
     if (!getenv("TM_JQ_WORKERS"))      _putenv("TM_JQ_WORKERS=4");
     if (!getenv("TM_LOADDONE"))        _putenv("TM_LOADDONE=5");
     if (!getenv("TM_VIDEO_MODES"))     _putenv("TM_VIDEO_MODES=2,1");
-    if (!getenv("TM_FORCEWORLD"))      _putenv("TM_FORCEWORLD=15,direct");
+    if (!getenv("TM_FORCEWORLD"))      _putenv("TM_FORCEWORLD=5,menu");
     if (!getenv("TM_RSX_W"))           _putenv("TM_RSX_W=1280");
     if (!getenv("TM_RSX_H"))           _putenv("TM_RSX_H=720");
 #endif
@@ -716,6 +733,7 @@ int main(int argc, char** argv)
     tm_init_title_metadata();/* real TITLE_ID/TITLE from the disc PARAM.SFO */
     fprintf(stderr,"[boot-dbg] before lv2_init_syscalls\n"); fflush(stderr);
     lv2_init_syscalls();     /* real lv2 syscall table (semaphore/memory/fs/...) */
+    tm_install_syscall_hooks();
     fprintf(stderr,"[boot-dbg] after lv2_init_syscalls\n"); fflush(stderr);
 
     /* Install the guest-callback hook and start the synthetic RSX vblank driver

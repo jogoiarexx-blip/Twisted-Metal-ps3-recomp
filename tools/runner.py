@@ -24,17 +24,22 @@ def main():
     env["TM_BRB_PARK"] = "1"
     env["TM_BRB_ACK"] = "1"
     env["TM_JQ_WORKERS"] = "4"
-    env["TM_LOADDONE"] = "5"
+    env["TM_LOADDONE"] = os.environ.get("TM_LOADDONE", "15")
     env["TM_VIDEO_MODES"] = "2,1"
-    env["TM_FORCEWORLD"] = "15,direct"
+    if "TM_FORCEWORLD" in os.environ:
+        env["TM_FORCEWORLD"] = os.environ["TM_FORCEWORLD"]
+    if "TM_FORCESTATE" in os.environ:
+        env["TM_FORCESTATE"] = os.environ["TM_FORCESTATE"]
     env["TM_RSX_W"] = "1280"
     env["TM_RSX_H"] = "720"
     env["TM_LIVE_DUMP"] = "1"
+    env["TM_FBDUMP"] = "3"
+    env["TM_MAINSTACK"] = "2"
     env["TM_WATCHDOG_SECS"] = "0"  # disable watchdog to avoid any SuspendThread lock contention
 
     # Clean old dumps
     for p in os.listdir(r"D:\Twisted metal"):
-        if p.startswith("surf_arena_") and p.endswith(".ppm"):
+        if (p.startswith("surf_arena_") or p.startswith("surf_menu_")) and p.endswith(".ppm"):
             try: os.remove(os.path.join(r"D:\Twisted metal", p))
             except: pass
 
@@ -56,7 +61,7 @@ def main():
         def reader():
             for line in p.stdout:
                 log_f.write(line)
-                if any(k in line for k in ("[live]", "ARENA", "3D", "WorldLoader", "FATAL", "ERROR", "CRASH")):
+                if any(k in line for k in ("[live]", "ARENA", "3D", "WorldLoader", "FATAL", "ERROR", "CRASH", "Ui", "Intro", "state", "Movie", "[ui]", "[states]", "[forceworld]", "[probe]", "CommonBank")):
                     print(line.strip())
 
         t = threading.Thread(target=reader, daemon=True)

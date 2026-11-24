@@ -25,10 +25,113 @@
 #include <thread>
 #include <chrono>
 
+#ifdef _WIN32
+#define WIN32_LEAN_AND_MEAN
+#include <windows.h>
+#endif
+
+#define PPU_THREAD_MAX 64
+#define PPU_THREAD_STATE_FREE 0
+#define PPU_THREAD_STATE_RUNNING 1
+#define PPU_THREAD_STATE_FINISHED 2
+#define PPU_THREAD_STATE_DETACHED 3
+
+typedef struct ppu_thread_info {
+    int          state;
+    ppu_context  ctx;
+    char         name[64];
+    int32_t      priority;
+    int64_t      exit_status;
+    int          joinable;
+    uint32_t     stack_addr;
+    uint32_t     stack_size;
+    uint64_t     entry_addr;
+    uint64_t     tls_addr;
+    uint32_t     prof_pc;
+#ifdef _WIN32
+    HANDLE       host_thread;
+    DWORD        host_tid;
+    HANDLE       finish_event;
+#else
+    void*        host_thread;
+    void*        finish_mutex;
+    void*        finish_cond;
+    int          finished;
+#endif
+} ppu_thread_info;
+
+extern "C" ppu_thread_info g_ppu_threads[PPU_THREAD_MAX];
+
+#define LV2_SYSCALL_MAX 1024
+#define SYS_PPU_THREAD_JOIN 44
+
+typedef int64_t (*lv2_syscall_fn)(ppu_context* ctx);
+
+typedef struct lv2_syscall_table {
+    lv2_syscall_fn handlers[LV2_SYSCALL_MAX];
+} lv2_syscall_table;
+
+extern "C" lv2_syscall_table g_lv2_syscalls;
+
+static lv2_syscall_fn s_real_sys_ppu_thread_join = nullptr;
+
+static int64_t tm_sys_ppu_thread_join(ppu_context* ctx)
+{
+    uint64_t tid = ctx->gpr[3];
+    uint32_t status_addr = (uint32_t)ctx->gpr[4];
+
+    ppu_thread_info* t = nullptr;
+    for (int i = 0; i < PPU_THREAD_MAX; i++) {
+        if (g_ppu_threads[i].state != PPU_THREAD_STATE_FREE &&
+            g_ppu_threads[i].ctx.thread_id == tid) {
+            t = &g_ppu_threads[i];
+            break;
+        }
+    }
+
+    if (t) {
+        fprintf(stderr, "[join-hook] ppu_thread_join(tid=%llu name='%s' state=%d)\n",
+                (unsigned long long)tid, t->name, t->state);
+        fflush(stderr);
+        if (tid == 14 || (t->name[0] == 'f' && strstr(t->name, "fios"))) {
+#ifdef _WIN32
+            DWORD wait_res = WaitForSingleObject(t->finish_event, 250);
+            if (wait_res == WAIT_TIMEOUT) {
+                fprintf(stderr, "[join-hook] FIOS scheduler thread tid=%llu ('%s') timed out waiting to exit; terminating thread to unblock teardown\n",
+                        (unsigned long long)tid, t->name);
+                fflush(stderr);
+                TerminateThread(t->host_thread, 0);
+                t->exit_status = 0;
+                SetEvent(t->finish_event);
+            }
+#endif
+        }
+    }
+
+    if (s_real_sys_ppu_thread_join) {
+        return s_real_sys_ppu_thread_join(ctx);
+    }
+    return 0;
+}
+
+extern "C" void tm_install_syscall_hooks(void)
+{
+    if (g_lv2_syscalls.handlers[SYS_PPU_THREAD_JOIN]) {
+        s_real_sys_ppu_thread_join = g_lv2_syscalls.handlers[SYS_PPU_THREAD_JOIN];
+        g_lv2_syscalls.handlers[SYS_PPU_THREAD_JOIN] = tm_sys_ppu_thread_join;
+        fprintf(stderr, "[fios] installed sys_ppu_thread_join hook for clean teardown\n");
+        fflush(stderr);
+    }
+}
+
 extern "C" {
+extern uint8_t* vm_base;
 void     ps3_hle_register_ctx(uint32_t nid, const char* name, void (*fn)(ppu_context*));
 uint32_t vm_read32(uint64_t a);
 void     vm_write32(uint64_t a, uint32_t v);
+uint64_t vm_read64(uint64_t a);
+void     vm_write64(uint64_t a, uint64_t v);
+void     sys_event_queue_cancel_by_id(uint32_t queue_id);
 uint64_t ppu_guest_call(uint32_t opd, uint64_t a0, uint64_t a1, uint64_t a2, uint64_t a3,
                         uint64_t a4, uint64_t a5, uint64_t a6, uint64_t a7);
 int32_t  cellGcmMapEaIoAddress(uint32_t ea, uint32_t io, uint32_t size);
@@ -709,24 +812,39 @@ void func_005CAEA0_lifted(ppu_context* ctx);
  * instead of the intro movie. */
 /* The UI state machine pointer, captured from UiState::enter(machine, new,
  * prev). tm_force_state() needs it to drive a transition itself. */
+ppu_context* g_tm_main_ctx = nullptr;   /* main thread, for TM_MAINSTACK */
 static uint32_t g_ui_machine = 0;
+static uint32_t s_current_ui_vtable = 0;
 void func_005BA908(ppu_context* ctx)
 {
+    g_tm_main_ctx = ctx;
     g_ui_machine = (uint32_t)ctx->gpr[3];
-    if (tm_trace_on()) {
-        const uint32_t st = (uint32_t)ctx->gpr[4];
-        const uint32_t vt = st ? vm_read32(st) : 0;
-        fprintf(stderr, "[trace] UiState::enter state=0x%08X vtable=0x%08X [", st, vt);
-        /* The vtable holds PPC64 function descriptors, so the slot value is
-         * not the code address -- dereference it to get the entry point, which
-         * is what names the state against the lifted functions. */
-        for (uint32_t i = 0; i < 10 && vt; i++) {
-            const uint32_t d = vm_read32(vt + i * 4);
-            fprintf(stderr, " %08X", d ? vm_read32(d) : 0);
-        }
-        fprintf(stderr, " ]\n");
+    const uint32_t st = (uint32_t)ctx->gpr[4];
+    const uint32_t vt = st ? vm_read32(st) : 0;
+    s_current_ui_vtable = vt;
+    const char* st_name = "Unknown";
+    switch (vt) {
+        case 0x00CEF490u: st_name = "UiLegal_HealthWarning"; break;
+        case 0x00CEF290u: st_name = "UiLegal_1"; break;
+        case 0x00CEF310u: st_name = "UiLegal_2"; break;
+        case 0x00CEF390u: st_name = "UiLegal_3"; break;
+        case 0x00CEF410u: st_name = "UiLegal_4"; break;
+        case 0x00CEF4E8u: st_name = "UiLegal_ESRB"; break;
+        case 0x00CF0420u: st_name = "UiIntroMovie"; break;
+        case 0x00CEF690u: st_name = "UiAttract / UiPreMenu"; break;
+        case 0x00CF0628u: st_name = "UiTitle (Press START)"; break;
+        case 0x00CEF590u: st_name = "UiMainMenu (Front-End Main Menu)"; break;
+        case 0x00CEF810u: st_name = "UiCampaignSelect"; break;
+        default: break;
     }
-    tm_trace("UiState::enter", func_005BA908_lifted, ctx);
+    fprintf(stderr, "[ui] UiState::enter state=0x%08X vtable=0x%08X ('%s') [", st, vt, st_name);
+    for (uint32_t i = 0; i < 10 && vt; i++) {
+        const uint32_t d = vm_read32(vt + i * 4);
+        fprintf(stderr, " %08X", d ? vm_read32(d) : 0);
+    }
+    fprintf(stderr, " ]\n");
+    fflush(stderr);
+    func_005BA908_lifted(ctx);
 }
 /* TM_FORCESTATE=<vtable hex>[,seconds] drives the state machine into the state
  * built on that vtable. Two of them reach WorldLoader::loadCinema and so the
@@ -737,7 +855,7 @@ void func_005BA908(ppu_context* ctx)
  * thread with a live stack, and that update is skipped for the one frame. */
 static uint32_t tm_find_state(uint32_t vt)
 {
-    for (uint32_t a = 0x17E00000u; a < 0x18400000u; a += 4)
+    for (uint32_t a = 0x11000000u; a < 0x19000000u; a += 4)
         if (vm_read32(a) == vt) return a;
     return 0;
 }
@@ -749,7 +867,7 @@ static uint32_t tm_find_state(uint32_t vt)
 static void tm_list_states(void)
 {
     int n = 0;
-    for (uint32_t a = 0x17E00000u; a < 0x18400000u; a += 4) {
+    for (uint32_t a = 0x11000000u; a < 0x19000000u; a += 4) {
         const uint32_t vt = vm_read32(a);
         if (vt < 0x00CE0000u || vt >= 0x00CF2000u || (vt & 3)) continue;
         const uint32_t d4 = vm_read32(vt + 16);
@@ -775,9 +893,18 @@ static bool tm_force_state(ppu_context* ctx)
     if (armed < 0) {
         const char* e = getenv("TM_FORCESTATE");
         armed = e ? 1 : 0;
-        if (e) { vt = (uint32_t)strtoul(e, nullptr, 16);
-                 const char* c = strchr(e, 44);
-                 if (c) secs = (uint32_t)strtoul(c + 1, nullptr, 0); }
+        if (e) {
+            if (strstr(e, "menu") || strstr(e, "mainmenu")) {
+                vt = 0x00CEF590u;
+            } else if (strstr(e, "title")) {
+                vt = 0x00CF0628u;
+            } else {
+                vt = (uint32_t)strtoul(e, nullptr, 16);
+            }
+            const char* c = strchr(e, 44);
+            if (c) secs = (uint32_t)strtoul(c + 1, nullptr, 0);
+            else if (vt == 0x00CEF590u || vt == 0x00CF0628u) secs = 4;
+        }
     }
     static clock_t t0 = 0;
     if (!t0) t0 = clock();   /* runs even without TM_FORCESTATE */
@@ -786,8 +913,19 @@ static bool tm_force_state(ppu_context* ctx)
     if (armed && !done && g_ui_machine && el >= secs) {
         done = 1;
         { const char* e = getenv("TM_FORCESTATE");
-          if (e && strcmp(e, "list") == 0) { tm_list_states(); return false; } }
-        const uint32_t st = tm_find_state(vt);
+          if (e && strncmp(e, "list", 4) == 0) { tm_list_states(); return false; } }
+        uint32_t st = 0;
+        const uint32_t fe_mgr = vm_read32(0x00F42288u);
+        if (fe_mgr) {
+            if (vt == 0x00CEF590u) {
+                st = vm_read32(fe_mgr + 0x3AACu);
+                if (!st) st = vm_read32(fe_mgr + 0x3ABCu);
+            } else if (vt == 0x00CF0628u) {
+                st = vm_read32(fe_mgr + 0x3B1Cu);
+                if (!st) st = vm_read32(fe_mgr + 0x3B20u);
+            }
+        }
+        if (!st) st = tm_find_state(vt);
         g_forced_state = st;
         fprintf(stderr, "[forcestate] vtable 0x%08X -> state 0x%08X (machine 0x%08X)\n",
                 vt, st, g_ui_machine);
@@ -845,8 +983,9 @@ static bool tm_force_state(ppu_context* ctx)
         wsecs = e ? (uint32_t)strtoul(e, nullptr, 0) : 0;
     }
     if (warmed && !wdone && el >= wsecs) {
-        wdone = 1;
         const uint32_t mgr  = vm_read32(0x00F4A248u);
+        if (!mgr) return false;
+        wdone = 1;
         const uint32_t flag = vm_read8(0x00F3810Cu);
         /* TM_FORCEWORLD=<secs>,game takes the loadGame branch whatever the flag
          * says. The byte at 0x00F3810C selects "back to the UI" (0x0010EC08)
@@ -854,14 +993,37 @@ static bool tm_force_state(ppu_context* ctx)
          * so honouring it just reloads the shell. */
         const char* wa = getenv("TM_FORCEWORLD");
         const int want_game = wa && strstr(wa, "game") != nullptr;
-        const uint32_t fn   = (flag && !want_game) ? 0x0010EC08u : 0x0010EB0Cu;
-        fprintf(stderr, "[forceworld] flag=%u -> func_%08X(0x%08X)\n", flag, fn, mgr);
+        const int want_menu = wa && strstr(wa, "menu") != nullptr;
+        if (want_menu) {
+            vm_write8(0x00F3810Cu, 1);
+        }
+        const uint32_t fn   = (want_menu || (flag && !want_game)) ? 0x0010EC08u : 0x0010EB0Cu;
+        fprintf(stderr, "[forceworld] flag=%u, want_menu=%d, want_game=%d -> func_%08X(0x%08X)\n",
+                flag, want_menu, want_game, fn, mgr);
         fflush(stderr);
         /* func_0010EB0C switches on a level type at mgr+0x5454 and only reaches
          * WorldLoader::loadGame for 1, 4 or 6 -- anything else returns without
          * loading. At the menu it holds none of those, so set one first.
          * TM_FORCEWORLD=<secs>,game,<n> picks it; default 1. */
         if (mgr) {
+            if (want_menu) {
+                fprintf(stderr, "[forceworld] forcing UI Shell & Menu via func_0010EC08(0x%08X)\n", mgr);
+                fflush(stderr);
+                vm_write8(0x00F3810Cu, 1);
+                ctx->gpr[3] = mgr;
+                ctx->ctr = 0x0010EC08u;
+                ps3_indirect_call(ctx);
+                return true;
+            }
+            if (wa && (strstr(wa, "direct_ui") || strstr(wa, "direct_menu"))) {
+                fprintf(stderr, "[forceworld] direct WorldLoader::loadUi(0x00F06F98)\n");
+                fflush(stderr);
+                vm_write8(0x00F3810Cu, 1);
+                ctx->gpr[3] = 0x00F06F98u;
+                ctx->ctr = 0x0020C33Cu;
+                ps3_indirect_call(ctx);
+                return true;
+            }
             if (want_game) {
                 uint32_t lt = 1;
                 const char* c = wa ? strrchr(wa, 44) : nullptr;
@@ -908,11 +1070,109 @@ static bool tm_force_state(ppu_context* ctx)
 }
 
 void func_005BB358(ppu_context* ctx)
-{ if (tm_force_state(ctx)) return;
-  static int n = 0;
-  if (tm_trace_on() && (n++ < 4 || tm_trace_verbose())) tm_trace("UiState::update", func_005BB358_lifted, ctx);
-  else func_005BB358_lifted(ctx); }
-void func_005CAEA0(ppu_context* ctx) { tm_trace("UiState::setTimer", func_005CAEA0_lifted, ctx); }
+{
+    g_tm_main_ctx = ctx;
+    if (tm_force_state(ctx)) return;
+
+    const uint32_t fe_mgr = vm_read32(0x00F42288u);
+    static bool fe_dumped = false;
+    if (!fe_dumped && fe_mgr) {
+        fe_dumped = true;
+        fprintf(stderr, "[fe-dump] fe_mgr=0x%08X live state slots:\n", fe_mgr);
+        for (uint32_t off = 0x3A00; off <= 0x3B80; off += 4) {
+            uint32_t obj = vm_read32(fe_mgr + off);
+            if (obj >= 0x10000000u && obj < 0x20000000u) {
+                uint32_t vt = vm_read32(obj);
+                if (vt >= 0x00CE0000u && vt < 0x00CF2000u) {
+                    fprintf(stderr, "  +0x%04X: obj=0x%08X vtable=0x%08X\n", off, obj, vt);
+                }
+            }
+        }
+        fflush(stderr);
+    }
+
+    /* Auto-advance from UiAttract / UiPreMenu (0x00CEF690) to UiTitle or UiMainMenu */
+    static int attract_ticks = 0;
+    static int attract_advanced = 0;
+    if (s_current_ui_vtable == 0x00CEF690u) {
+        attract_ticks++;
+        if (!attract_advanced && attract_ticks >= 60 && g_ui_machine && fe_mgr) {
+            attract_advanced = 1;
+            uint32_t target = vm_read32(fe_mgr + 0x3B20u); /* UiTitle */
+            if (!target) target = vm_read32(fe_mgr + 0x3B1Cu);
+            if (!target) target = vm_read32(fe_mgr + 0x3ABCu); /* UiMainMenu */
+            if (!target) target = vm_read32(fe_mgr + 0x3AACu);
+            if (!target) target = tm_find_state(0x00CF0628u);
+            if (!target) target = tm_find_state(0x00CEF590u);
+            if (target) {
+                uint32_t tvt = vm_read32(target);
+                fprintf(stderr, "[attract] auto-advancing from UiAttract to target state 0x%08X (vtable 0x%08X)\n",
+                        target, tvt);
+                fflush(stderr);
+                ctx->gpr[3] = g_ui_machine;
+                ctx->gpr[4] = target;
+                ctx->gpr[5] = 0;
+                func_005BA908_lifted(ctx);
+                return;
+            }
+        }
+    }
+
+    /* Auto-advance from UiTitle (0x00CF0628) to UiMainMenu (0x00CEF590) */
+    static int title_ticks = 0;
+    static int title_advanced = 0;
+    if (s_current_ui_vtable == 0x00CF0628u) {
+        title_ticks++;
+        if (!title_advanced && title_ticks >= 60 && g_ui_machine && fe_mgr) {
+            title_advanced = 1;
+            uint32_t target = vm_read32(fe_mgr + 0x3ABCu); /* UiMainMenu */
+            if (!target) target = vm_read32(fe_mgr + 0x3AACu);
+            if (!target) target = tm_find_state(0x00CEF590u);
+            if (target) {
+                uint32_t tvt = vm_read32(target);
+                fprintf(stderr, "[title] 'Press START' auto-advancing to UiMainMenu 0x%08X (vtable 0x%08X)\n",
+                        target, tvt);
+                fflush(stderr);
+                ctx->gpr[3] = g_ui_machine;
+                ctx->gpr[4] = target;
+                ctx->gpr[5] = 0;
+                func_005BA908_lifted(ctx);
+                return;
+            }
+        }
+    }
+
+    static int n = 0;
+    if (n++ < 5 || (n % 120) == 0) {
+        fprintf(stderr, "[ui] UiState::update #%d machine=0x%08X cur_vt=0x%08X\n", n, (uint32_t)ctx->gpr[3], s_current_ui_vtable);
+        fflush(stderr);
+    }
+    func_005BB358_lifted(ctx);
+}
+void func_005CAEA0(ppu_context* ctx)
+{
+    const uint32_t obj = (uint32_t)ctx->gpr[3];
+    if (obj) {
+        static int fast_legal = -1;
+        if (fast_legal < 0) {
+            const char* e = getenv("TM_FAST_LEGAL");
+            fast_legal = (e && atoi(e) == 0) ? 0 : 1;
+        }
+        if (fast_legal) {
+            uint32_t d80 = vm_read32(obj + 0x80);
+            uint32_t d84 = vm_read32(obj + 0x84);
+            if (d80 >= 0x3F800000u && d80 <= 0x42700000u) {
+                fprintf(stderr, "[legal-timer] obj=0x%08X: scaling +0x80 duration 0x%08X -> 0.4s\n", obj, d80);
+                vm_write32(obj + 0x80, 0x3ECCCCCDu); /* 0.4f */
+            }
+            if (d84 >= 0x3F800000u && d84 <= 0x42700000u) {
+                fprintf(stderr, "[legal-timer] obj=0x%08X: scaling +0x84 duration 0x%08X -> 0.4s\n", obj, d84);
+                vm_write32(obj + 0x84, 0x3ECCCCCDu); /* 0.4f */
+            }
+        }
+    }
+    tm_trace("UiState::setTimer", func_005CAEA0_lifted, ctx);
+}
 /* The state the machine enters straight after UiLegal_4 and leaves again for
  * the main menu. It calls into the 0x006Axxxx MoviePlayer, which is where
  * the intro video lives -- so this is where the movie is meant to start
@@ -1131,7 +1391,24 @@ void func_009D7B08(ppu_context* ctx)
 {
     static int silent = -1;
     if (silent < 0) silent = getenv("TM_BRB_PARK") ? 1 : 0;
-    if (silent) { for (;;) std::this_thread::sleep_for(std::chrono::seconds(1)); }
+    if (silent) {
+        const uint32_t dev = (uint32_t)ctx->gpr[31];
+        fprintf(stderr, "[brbdrv] parked driver thread on dev=0x%08X\n", dev);
+        fflush(stderr);
+        while (dev && vm_base && (vm_read32(dev) & 3) == 3) {
+            std::this_thread::sleep_for(std::chrono::milliseconds(5));
+        }
+        fprintf(stderr, "[brbdrv] driver thread exiting cleanly (dev status=0x%08X)\n", dev ? vm_read32(dev) : 0);
+        fflush(stderr);
+        if (dev && vm_base) {
+            sys_event_queue_cancel_by_id(3);
+            vm_write64(dev + 0x48, 0x00000000FFFFFFFFULL);
+            fprintf(stderr, "[brbdrv] unblocked brbClient (cancelled q=3) and set dev+0x48 tid=0xFFFFFFFF\n");
+            fflush(stderr);
+        }
+        ctx->gpr[3] = 0;
+        return;
+    }
     func_009D7B08_lifted(ctx);
 }
 void func_009CF718(ppu_context* ctx)
@@ -1295,7 +1572,32 @@ void func_00693AD0(ppu_context* ctx) { tm_trace("avi::00693AD0", func_00693AD0_l
 void func_00081D88_lifted(ppu_context* ctx);
 void func_00081D88(ppu_context* ctx) { tm_trace("avi::00081D88", func_00081D88_lifted, ctx); }
 void func_001DB6B8_lifted(ppu_context* ctx);
-void func_001DB6B8(ppu_context* ctx) { tm_trace("avi::001DB6B8", func_001DB6B8_lifted, ctx); }
+void func_001DB6B8(ppu_context* ctx)
+{
+    static int skip_secs = -1;
+    if (skip_secs < 0) {
+        const char* e = getenv("TM_SKIPMOVIE");
+        skip_secs = e ? atoi(e) : 3;
+    }
+    static clock_t t_movie_start = 0;
+    if (!t_movie_start) t_movie_start = clock();
+    const uint32_t el = t_movie_start ? (uint32_t)((clock() - t_movie_start) / CLOCKS_PER_SEC) : 0;
+    static int skipped = 0;
+    if (skip_secs >= 0 && !skipped && el >= (uint32_t)skip_secs) {
+        const uint32_t mgr = vm_read32(0x00F4A248u);
+        if (mgr) {
+            skipped = 1;
+            fprintf(stderr, "[movie] auto-skipping movie after %u s -> func_0010EC08(mgr=0x%08X)\n", el, mgr);
+            fflush(stderr);
+            vm_write8(0x00F3810Cu, 1);
+            ctx->gpr[3] = mgr;
+            ctx->ctr = 0x0010EC08u;
+            ps3_indirect_call(ctx);
+            return;
+        }
+    }
+    tm_trace("avi::001DB6B8", func_001DB6B8_lifted, ctx);
+}
 void func_001DB4FC_lifted(ppu_context* ctx);
 /* The constructor that installs vtable 0x00CE78E0, whose slot 0 is
  * playMovieFile. playMovieFile has no static callers -- it is only ever
@@ -1340,7 +1642,7 @@ void func_00360E84(ppu_context* ctx) { tm_trace("AL::e84", func_00360E84_lifted,
 void func_00360EBC(ppu_context* ctx) { tm_trace("AL::ebc", func_00360EBC_lifted, ctx); }
 void func_00360F68(ppu_context* ctx) { tm_trace("AL::f68", func_00360F68_lifted, ctx); }
 void func_00360F88(ppu_context* ctx) { tm_trace("AL::f88", func_00360F88_lifted, ctx); }
-ppu_context* g_tm_main_ctx;   /* TEMP: main thread, for TM_MAINSTACK */
+// g_tm_main_ctx defined above
 void func_0064BA08(ppu_context* ctx)
 { g_tm_main_ctx = ctx;
   { static long n = 0; const uint32_t o = (uint32_t)ctx->gpr[3];  /* TEMP: render gates */
@@ -1358,7 +1660,42 @@ void func_0064C410_lifted(ppu_context* ctx);
 void func_0010E57C_lifted(ppu_context* ctx);
 void func_0064C410(ppu_context* ctx) { tm_trace("loadBar::finish", func_0064C410_lifted, ctx); }
 void func_0010E57C(ppu_context* ctx) { tm_trace("setLoadDone", func_0010E57C_lifted, ctx); }
-void func_0036204C(ppu_context* ctx) { tm_trace("AL::204c", func_0036204C_lifted, ctx); }
+void func_0036204C(ppu_context* ctx)
+{
+    if (vm_base) {
+        fprintf(stderr, "[fios] func_0036204C: AL::204c teardown entered, clearing pending ops on schedulers\n");
+        static const uint32_t scheds[] = {
+            0x40001790u - 0xA0u,
+            0x40032560u - 0xA0u,
+            0x40043B90u - 0xA0u,
+            0x40043AF0u
+        };
+        for (uint32_t s : scheds) {
+            if (s) {
+                const uint32_t pending = vm_read32(s + 0x220);
+                if (pending) {
+                    fprintf(stderr, "[fios] clearing pending ops count (%u) on scheduler 0x%08X to allow clean shutdown\n",
+                            pending, s);
+                    vm_write32(s + 0x220, 0);
+                }
+            }
+        }
+        const uint32_t p = vm_read32(0x00F21930u - 0x651Cu);
+        const uint32_t s = p ? vm_read32(p) : 0;
+        if (s) {
+            const uint32_t pending = vm_read32(s + 0x220);
+            if (pending) {
+                fprintf(stderr, "[fios] clearing pending ops count (%u) on active scheduler 0x%08X\n",
+                        pending, s);
+                vm_write32(s + 0x220, 0);
+            }
+        }
+        fflush(stderr);
+    }
+    tm_trace("AL::204c", func_0036204C_lifted, ctx);
+    fprintf(stderr, "[fios] AL::204c teardown completed successfully\n");
+    fflush(stderr);
+}
 
 
 
@@ -1643,6 +1980,33 @@ static void tm_brb_ack_tick(void)
     if (!on || !vm_base) return;
     const uint32_t r30 = vm_read32(0x00F21930u - 0x60F8u);
     if (!r30) return;
+
+    /* TM_BRB_ACK: also acknowledge stream flush / drain in BRB device (0x01AA8580) */
+    const uint32_t dev = vm_read32(r30 - 0x8000u);
+    if (dev) {
+        const uint32_t f = vm_read32(dev + 0x2B4Cu);
+        if (f & 2) {
+            vm_write32(dev + 0x2B4Cu, f & ~2u);
+            static int n_flush = 0;
+            if (n_flush++ < 10) {
+                fprintf(stderr, "[brb-ack] cleared flush busy flag in dev=0x%08X (+0x2B4C was 0x%08X)\n", dev, f);
+                fflush(stderr);
+            }
+        }
+        const uint32_t client_dev = dev + 0x180u;
+        if ((vm_read32(client_dev) & 3) != 3) {
+            static bool q3_cancelled = false;
+            if (!q3_cancelled) {
+                q3_cancelled = true;
+                fprintf(stderr, "[brb-ack] BRB shutdown detected (client_dev=0x%08X status=0x%08X), cancelling q=3 and bypassing brbClient join\n",
+                        client_dev, vm_read32(client_dev));
+                fflush(stderr);
+                sys_event_queue_cancel_by_id(3);
+            }
+            vm_write64(client_dev + 0x48, 0x00000000FFFFFFFFULL);
+        }
+    }
+
     const uint32_t r27 = vm_read32(r30 - 0x7FFCu);
     const uint32_t obj = r27 ? vm_read32(r27) : 0;
     if (!obj) return;
@@ -1796,9 +2160,11 @@ extern "C" void tm_loaddone_tick(void)
      * one-shot poke released the spin once and it stalled again. */
     const int first = !done;
     done = 1;
+    vm_write8(0x0190FC7Du, 0); /* 0x0190FC7D is ReceivedExitGameRequest, keep 0 to avoid immediate shutdown */
+    vm_write8(0x0190FC80u, 0);
     vm_write8(0x0190FC89u, 1);
     vm_write32(0x018F205Cu, 1);
-    if (first) fprintf(stderr, "[probe] set load-complete byte 0x0190FC89 = 1, desc 0x018F205C = 1 after %d s\n", secs);
+    if (first) fprintf(stderr, "[probe] set load-complete bytes 0x0190FC7D=0, 0x0190FC80=0, 0x0190FC89=1, desc 0x018F205C=1 after %d s\n", secs);
     fflush(stderr);
 }
 

@@ -66,3 +66,4 @@ dumps/
 *.bmp
 *.ppm
 capture_fb*.png
+gamedata/
