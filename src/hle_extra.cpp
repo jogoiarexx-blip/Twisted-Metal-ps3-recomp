@@ -863,12 +863,46 @@ void func_005CAEA0_lifted(ppu_context* ctx);
 /* The UI state machine pointer, captured from UiState::enter(machine, new,
  * prev). tm_force_state() needs it to drive a transition itself. */
 ppu_context* g_tm_main_ctx = nullptr;   /* main thread, for TM_MAINSTACK */
+/* Host thread id of the real MAIN guest thread (set by boot_main). Several
+ * hooks used to assign g_tm_main_ctx from whatever thread ran them, so the
+ * "main" stack dumps were really other threads (the load-bar thread among them). */
+extern "C" volatile unsigned long g_tm_main_host_tid = 0;
+static inline void tm_set_main_ctx(ppu_context* c)
+{
+    if (!g_tm_main_host_tid || GetCurrentThreadId() == g_tm_main_host_tid) g_tm_main_ctx = c;
+}
+/* TM_THREADMAP=1: count hits of frame-level hooks per host thread and print the
+ * table every 10 s, so "which thread runs the UI update / the world step /
+ * Game::update" is measured instead of guessed. */
+static void tm_thread_hit(const char* name)
+{
+    static int on = -1;
+    if (on < 0) on = tm_env_bool("TM_THREADMAP", 0);
+    if (!on) return;
+    struct Row { const char* n; unsigned long tid; long c; };
+    static Row rows[64]; static int nrows = 0; static std::mutex mu;
+    static auto next = std::chrono::steady_clock::now() + std::chrono::seconds(10);
+    const unsigned long tid = GetCurrentThreadId();
+    std::lock_guard<std::mutex> lk(mu);
+    int i = 0;
+    for (; i < nrows; i++) if (rows[i].tid == tid && !strcmp(rows[i].n, name)) break;
+    if (i == nrows && nrows < 64) { rows[nrows++] = Row{name, tid, 0}; }
+    if (i < 64) rows[i].c++;
+    if (std::chrono::steady_clock::now() >= next) {
+        next += std::chrono::seconds(10);
+        fprintf(stderr, "[threadmap] main_host_tid=%lu\n", g_tm_main_host_tid);
+        for (int k = 0; k < nrows; k++)
+            fprintf(stderr, "[threadmap]   %-22s tid=%lu%s hits=%ld\n", rows[k].n, rows[k].tid,
+                    rows[k].tid == g_tm_main_host_tid ? "(MAIN)" : "", rows[k].c);
+        fflush(stderr);
+    }
+}
 static uint32_t g_ui_machine = 0;
 static uint32_t s_current_ui_vtable = 0;
 static uint32_t g_ui_cur_state = 0;
 void func_005BA908(ppu_context* ctx)
 {
-    g_tm_main_ctx = ctx;
+    tm_set_main_ctx(ctx); tm_thread_hit("UiState::enter");
     g_ui_machine = (uint32_t)ctx->gpr[3];
     const uint32_t st = (uint32_t)ctx->gpr[4];
     const uint32_t vt = st ? vm_read32(st) : 0;
@@ -1204,7 +1238,7 @@ static bool tm_force_state(ppu_context* ctx)
 
 void func_005BB358(ppu_context* ctx)
 {
-    g_tm_main_ctx = ctx;
+    tm_set_main_ctx(ctx); tm_thread_hit("UiState::update");
     if (tm_force_state(ctx)) return;
 
     const uint32_t fe_mgr = vm_read32(0x00F42288u);
@@ -1505,6 +1539,7 @@ void func_002B8F38(ppu_context* ctx) { tm_trace("scriptFactory", func_002B8F38_l
 static void tm_fe_tick(ppu_context* ctx);
 void func_0020C7F8_lifted(ppu_context* ctx);
 void func_0020C7F8(ppu_context* ctx) {
+    tm_thread_hit("world::0020C7F8");
     uint32_t w0_pre = g_tm_fw_fired ? vm_read32(0x00F384E0u) : 0;
     tm_trace("world::0020C7F8", func_0020C7F8_lifted, ctx);
     uint64_t orig_rc = ctx->gpr[3];
@@ -1937,7 +1972,7 @@ void func_00360F68(ppu_context* ctx) { tm_trace("AL::f68", func_00360F68_lifted,
 void func_00360F88(ppu_context* ctx) { tm_trace("AL::f88", func_00360F88_lifted, ctx); }
 // g_tm_main_ctx defined above
 void func_0064BA08(ppu_context* ctx)
-{ g_tm_main_ctx = ctx;
+{ tm_set_main_ctx(ctx); tm_thread_hit("loadBar::frame");
   { static long n = 0; const uint32_t o = (uint32_t)ctx->gpr[3];  /* TEMP: render gates */
     if ((n++ % 50) == 0) fprintf(stderr, "[frame] #%ld obj=0x%08X +250=%u +251=%u +252=%u +88=%u\n", n, o,
         vm_read8(o + 0x250), vm_read8(o + 0x251), vm_read8(o + 0x252), vm_read8(o + 0x88)); }
@@ -3004,10 +3039,10 @@ static void tm_fe_tick(ppu_context* ctx)
 
 volatile long g_tm_players_upd, g_tm_frame_upd;
 void func_000DB394_lifted(ppu_context* ctx);
-void func_000DB394(ppu_context* ctx) { g_tm_players_upd++; func_000DB394_lifted(ctx); }
+void func_000DB394(ppu_context* ctx) { g_tm_players_upd++; tm_thread_hit("players::update"); func_000DB394_lifted(ctx); }
 void func_0010C898_lifted(ppu_context* ctx);
 void func_0010C898(ppu_context* ctx) {
-    g_tm_frame_upd++;
+    g_tm_frame_upd++; tm_thread_hit("Game::update");
     tm_fe_tick(ctx);
     {
         static int fw = -1; if (fw < 0) fw = getenv("TM_FORCEWORLD") ? 1 : 0;

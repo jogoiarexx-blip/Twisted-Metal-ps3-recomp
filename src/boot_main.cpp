@@ -33,6 +33,7 @@ void     tm_hle_register_extra(void);   /* src/hle_extra.cpp */
 void     tm_init_title_metadata(void);  /* src/hle_extra.cpp */
 void     tm_fbdump_tick(void);          /* src/hle_extra.cpp */
 void     tm_ef_kick_tick(void);         /* src/hle_extra.cpp */
+extern "C" volatile unsigned long g_tm_main_host_tid; /* src/hle_extra.cpp */
 void     tm_loaddone_tick(void);        /* src/hle_extra.cpp */
 void     tm_fifowatch_tick(void);       /* src/hle_extra.cpp */
 void     tm_memdump_tick(void);         /* src/hle_extra.cpp */
@@ -764,6 +765,7 @@ int main(int argc, char** argv)
     printf("\n[boot] dispatching entry OPD 0x%08X (stack top 0x%08X)\n\n", entry, STACK_TOP);
 #ifdef _WIN32
     fprintf(stderr, "[boot] MAIN guest thread tid=%lu\n", (unsigned long)GetCurrentThreadId());
+    g_tm_main_host_tid = (unsigned long)GetCurrentThreadId();
 #endif
     int rc = ppu_run(entry, STACK_TOP);
     printf("\n[boot] ppu_run returned %d (entry function unwound)\n", rc);
