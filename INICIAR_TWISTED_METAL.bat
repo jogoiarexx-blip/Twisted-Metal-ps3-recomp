@@ -20,7 +20,7 @@ set TM_BRB_SILENT=1
 set TM_BRB_PARK=1
 set TM_BRB_ACK=1
 set TM_JQ_WORKERS=4
-set TM_LOADDONE=5
+rem TM_LOADDONE intentionally not set: the 5 s load-complete probe makes ~1/3 of boots diverge.
 set TM_VIDEO_MODES=2,1
 set TM_FORCEWORLD=15,direct
 set TM_RSX_W=1280

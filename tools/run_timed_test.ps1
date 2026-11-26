@@ -11,7 +11,7 @@ $env:TM_BRB_SILENT = "1"
 $env:TM_BRB_PARK = "1"
 $env:TM_BRB_ACK = "1"
 $env:TM_JQ_WORKERS = "4"
-$env:TM_LOADDONE = "5"
+# TM_LOADDONE intentionally not set: the 5 s load-complete probe makes ~1/3 of boots diverge (stuck on the startup loading screen).
 $env:TM_VIDEO_MODES = "2,1"
 $env:TM_FORCEWORLD = "15,direct"
 $env:TM_RSX_W = "1280"

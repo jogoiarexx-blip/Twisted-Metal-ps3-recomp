@@ -24,7 +24,9 @@ def main():
     env["TM_BRB_PARK"] = "1"
     env["TM_BRB_ACK"] = "1"
     env["TM_JQ_WORKERS"] = "4"
-    env["TM_LOADDONE"] = os.environ.get("TM_LOADDONE", "15")
+    # TM_LOADDONE (forced load-complete probe) is opt-in: when forced it made ~1/3 of boots diverge.
+    if "TM_LOADDONE" in os.environ:
+        env["TM_LOADDONE"] = os.environ["TM_LOADDONE"]
     env["TM_VIDEO_MODES"] = "2,1"
     # Do not inherit stale TM_FORCEWORLD or TM_FORCESTATE unless explicitly requested with TM_FORCE_ENABLE=1
     if os.environ.get("TM_FORCE_ENABLE") == "1":
