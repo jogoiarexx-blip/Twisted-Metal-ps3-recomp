@@ -200,9 +200,9 @@ static void cellVideoOutGetDeviceInfo(ppu_context* ctx);
 static void cellNetCtlGetState(ppu_context* ctx);
 static void cellSpursTaskAttribute2Initialize(ppu_context* ctx);
 static void cellSpursCreateTask2(ppu_context* ctx);
-static void cellSpursTaskGetContextSaveAreaSize(ppu_context* ctx);
 static void probe_cellSpursSendSignal(ppu_context* ctx);
 static void probe_cellGcmGetFlipStatus(ppu_context* ctx);
+static void probe_cellGcmAddressToOffset(ppu_context* ctx);
 static void probe_EventFlagWait(ppu_context* ctx);
 static void tm_jq_push_job(ppu_context* ctx);
 extern "C" ppu_context* g_tm_postfx_ctx = nullptr;   /* TEMP: SpuPostFX thread (generated code) */
@@ -246,8 +246,6 @@ extern "C" void tm_hle_register_extra(void)
     ps3_hle_register_ctx(0x8ADADF65u, "_cellSpursTaskAttribute2Initialize",
                          cellSpursTaskAttribute2Initialize);
     ps3_hle_register_ctx(0xE14CA62Du, "cellSpursCreateTask2", cellSpursCreateTask2);
-    ps3_hle_register_ctx(0x9034E538u, "cellSpursTaskGetContextSaveAreaSize",
-                         cellSpursTaskGetContextSaveAreaSize);
     ps3_hle_register_ctx(0xE0A6DBE4u, "_cellSpursSendSignal", probe_cellSpursSendSignal);
     ps3_hle_register_ctx(0x72A577CEu, "cellGcmGetFlipStatus", probe_cellGcmGetFlipStatus);
     ps3_hle_register_ctx(0x373523D4u, "cellSpursEventFlagWait", probe_EventFlagWait);
@@ -266,6 +264,7 @@ extern "C" void tm_hle_register_extra(void)
     ps3_hle_register_ctx(0x41251F74u, "sceNp2Init", tm_sceNp2Init);
     ps3_hle_register_ctx(0x7FDF4FEFu, "cellSpursBarrierInitialize", tm_cellSpursBarrierInitialize);
     ps3_hle_register_ctx(0x9FCB567Bu, "cellSpursGetTasksetInfo",   tm_cellSpursGetTasksetInfo);
+    ps3_hle_register_ctx(0x21AC3697u, "cellGcmAddressToOffset",     probe_cellGcmAddressToOffset);
 }
 
 /* ---------------------------------------------------------------------------
@@ -538,13 +537,43 @@ static void tm_game_log(ppu_context* ctx)
     ctx->gpr[3] = 0;
 }
 
+static int tm_env_bool(const char* name, int def)
+{
+    const char* e = getenv(name);
+    if (!e || !*e) return def;
+    return atoi(e) != 0 ? 1 : 0;
+}
+
+/* ---- UiAttract diagnostics (TM_ATTRACT_DIAG) and hack switches ----------
+ * 0x01A05D04 is the "movie player active" word. Several hooks zero it on every
+ * call so the FE never suspends. TM_NO_MOVIE_ZERO=1 stops those writes (Test B)
+ * and the pre-write value is logged whenever it was non-zero, so the log shows
+ * whether the game ever set it. Default behaviour is unchanged. */
+static int tm_addr_ok(uint32_t a)
+{
+    return a >= 0x00010000u && a < 0x30000000u;
+}
+static void tm_movie_flag_clear(const char* site)
+{
+    static int off = -1, logged = 0;
+    if (off < 0) off = tm_env_bool("TM_NO_MOVIE_ZERO", 0);
+    const uint32_t prev = vm_read32(0x01A05D04u);
+    if (prev != 0 && logged < 40) {
+        logged++;
+        fprintf(stderr, "[movieflag] %s saw 0x01A05D04=0x%08X (%s)\n",
+                site, prev, off ? "left as is" : "zeroing");
+        fflush(stderr);
+    }
+    if (!off) vm_write32(0x01A05D04u, 0);
+}
+
 /* Replaces the lifted body, which tools/post_lift.py renames to _lifted. The
  * lifter emits direct C++ calls, so a rename is the only way to intercept one;
  * ppu_register_function redirects indirect dispatch only. */
 void func_0034ACAC(ppu_context* ctx)
 {
     static int on = -1;
-    if (on < 0) on = getenv("TM_GAMELOG") ? 1 : 0;
+    if (on < 0) on = tm_env_bool("TM_GAMELOG", 0);
     if (on) tm_game_log(ctx);
     ctx->gpr[3] = 0;
 }
@@ -557,7 +586,7 @@ void func_00980B20_lifted(ppu_context* ctx);
 void func_00980B20(ppu_context* ctx)
 {
     static int on = -1;
-    if (on < 0) on = getenv("TM_GAMELOG") ? 1 : 0;
+    if (on < 0) on = tm_env_bool("TM_GAMELOG", 0);
     if (on) tm_game_log(ctx);
     func_00980B20_lifted(ctx);
 }
@@ -570,7 +599,7 @@ void func_004740EC_lifted(ppu_context* ctx);
 void func_004740EC(ppu_context* ctx)
 {
     static int on = -1;
-    if (on < 0) on = getenv("TM_GAMELOG") ? 1 : 0;
+    if (on < 0) on = tm_env_bool("TM_GAMELOG", 0);
     if (on) tm_game_log(ctx);
     func_004740EC_lifted(ctx);
 }
@@ -686,7 +715,7 @@ static void cellVideoOutGetDeviceInfo(ppu_context* ctx)
 static int tm_trace_on(void)
 {
     static int on = -1;
-    if (on < 0) on = getenv("TM_TRACE") ? 1 : 0;
+    if (on < 0) on = tm_env_bool("TM_TRACE", 0);
     return on;
 }
 
@@ -768,12 +797,33 @@ void func_0035FD84_lifted(ppu_context* ctx);
 void func_003609AC_lifted(ppu_context* ctx);
 void func_00474110_lifted(ppu_context* ctx);
 void func_006AC648_lifted(ppu_context* ctx);
-void func_0020C26C(ppu_context* ctx) { tm_trace("WorldLoader::loadGame", func_0020C26C_lifted, ctx); }
+static bool g_tm_fw_fired = false;
+
+void func_0020C26C(ppu_context* ctx) {
+    if (g_tm_fw_fired) { fprintf(stderr, "[fw-trace] WorldLoader::loadGame(script=0x%08X)\n", (uint32_t)ctx->gpr[3]); fflush(stderr); }
+    tm_trace("WorldLoader::loadGame", func_0020C26C_lifted, ctx);
+}
 void func_0020C33C(ppu_context* ctx) { tm_trace("WorldLoader::loadUi", func_0020C33C_lifted, ctx); }
 void func_0020C478(ppu_context* ctx) { tm_trace("WorldLoader::loadCinema", func_0020C478_lifted, ctx); }
 void func_0035FBFC(ppu_context* ctx) { tm_trace("ArchiveLoader::waitIO", func_0035FBFC_lifted, ctx); }
-void func_0035FD84(ppu_context* ctx) { tm_trace("ArchiveLoader::load", func_0035FD84_lifted, ctx); }
-void func_003609AC(ppu_context* ctx) { tm_trace("ArchiveLoader::thread", func_003609AC_lifted, ctx); }
+void func_0035FD84(ppu_context* ctx) {
+    if (g_tm_fw_fired) {
+        char buf[128];
+        fprintf(stderr, "[fw-trace] ArchiveLoader::load(path='%s')\n", tm_gstr((uint32_t)ctx->gpr[4], buf, sizeof buf));
+        fflush(stderr);
+    }
+    tm_trace("ArchiveLoader::load", func_0035FD84_lifted, ctx);
+}
+void func_003609AC(ppu_context* ctx) {
+    if (g_tm_fw_fired) {
+        char buf[128];
+        const uint32_t r3 = (uint32_t)ctx->gpr[3];
+        fprintf(stderr, "[fw-trace] ArchiveLoader::thread(r3=0x%08X b0=%u str='%s' r7=0x%08X r8=0x%08X)\n",
+                r3, r3 ? vm_read8(r3) : 0, r3 ? tm_gstr(r3, buf, sizeof buf) : "", (uint32_t)ctx->gpr[7], (uint32_t)ctx->gpr[8]);
+        fflush(stderr);
+    }
+    tm_trace("ArchiveLoader::thread", func_003609AC_lifted, ctx);
+}
 void func_00474110(ppu_context* ctx) { tm_trace("UiLegal_1::onEnter", func_00474110_lifted, ctx); }
 /* The rest of the legal-screen sequence. UiLegal_1 enters; whether its
  * update() advances to 2/3/4 is what says if the front end is running or
@@ -815,6 +865,7 @@ void func_005CAEA0_lifted(ppu_context* ctx);
 ppu_context* g_tm_main_ctx = nullptr;   /* main thread, for TM_MAINSTACK */
 static uint32_t g_ui_machine = 0;
 static uint32_t s_current_ui_vtable = 0;
+static uint32_t g_ui_cur_state = 0;
 void func_005BA908(ppu_context* ctx)
 {
     g_tm_main_ctx = ctx;
@@ -822,6 +873,7 @@ void func_005BA908(ppu_context* ctx)
     const uint32_t st = (uint32_t)ctx->gpr[4];
     const uint32_t vt = st ? vm_read32(st) : 0;
     s_current_ui_vtable = vt;
+    g_ui_cur_state = st;
     const char* st_name = "Unknown";
     switch (vt) {
         case 0x00CEF490u: st_name = "UiLegal_HealthWarning"; break;
@@ -924,6 +976,12 @@ static bool tm_force_state(ppu_context* ctx)
                 st = vm_read32(fe_mgr + 0x3B1Cu);
                 if (!st) st = vm_read32(fe_mgr + 0x3B20u);
             }
+            for (uint32_t off = 0x3A00u; !st && off <= 0x3B80u; off += 4) {
+                const uint32_t cand = vm_read32(fe_mgr + off);
+                if (cand >= 0x10000000u && cand < 0x30000000u && vm_read32(cand) == vt) {
+                    st = cand;
+                }
+            }
         }
         if (!st) st = tm_find_state(vt);
         g_forced_state = st;
@@ -934,7 +992,8 @@ static bool tm_force_state(ppu_context* ctx)
             ctx->gpr[3] = g_ui_machine;
             ctx->gpr[4] = st;
             ctx->gpr[5] = 0;
-            func_005BA908_lifted(ctx);
+            ctx->gpr[6] = 1;
+            func_005BA908(ctx);
             return true;
         }
     }
@@ -986,6 +1045,7 @@ static bool tm_force_state(ppu_context* ctx)
         const uint32_t mgr  = vm_read32(0x00F4A248u);
         if (!mgr) return false;
         wdone = 1;
+        g_tm_fw_fired = true;
         const uint32_t flag = vm_read8(0x00F3810Cu);
         /* TM_FORCEWORLD=<secs>,game takes the loadGame branch whatever the flag
          * says. The byte at 0x00F3810C selects "back to the UI" (0x0010EC08)
@@ -1031,6 +1091,79 @@ static bool tm_force_state(ppu_context* ctx)
                 fprintf(stderr, "[forceworld] levelType %u -> %u, gate 0x01541648=%u\n",
                         vm_read32(mgr + 0x5454), lt, vm_read32(0x01541648u));
                 vm_write32(mgr + 0x5454, lt);
+            }
+            /* TM_FORCEWORLD=<secs>,arena (or suburbs, sandbox, city, canals,
+             * park, rooftops, stadium): configure game manager 0x012056F0
+             * with a valid level from 0x00F2F05C, player 0 vehicle 0x384
+             * (Sweet Tooth), levelType=5 (Challenge), run the UI teardown
+             * slot *(0x00F4876C)->+0x44, and invoke func_0010EB0C(mgr). */
+            if (wa && (strstr(wa, "arena") || strstr(wa, "suburbs") || strstr(wa, "sandbox") ||
+                       strstr(wa, "city") || strstr(wa, "canals") || strstr(wa, "park") ||
+                       strstr(wa, "rooftops") || strstr(wa, "stadium"))) {
+                static const struct { const char* name; uint32_t ptr; } kLevels[] = {
+                    { "sandbox",  0x00C81B74u }, { "city",     0x00C81B7Cu },
+                    { "canals",   0x00C81B84u }, { "chase",    0x00C81B8Cu },
+                    { "times",    0x00C81B94u }, { "arena",    0x00C81B9Cu },
+                    { "suburbs",  0x00C81BA4u }, { "park",     0x00C81BACu },
+                    { "rooftops", 0x00C81BB4u }, { "stadium",  0x00C81BC4u },
+                };
+                uint32_t lvl_ptr = 0x00C81B9Cu; /* arena */
+                const char* lvl_name = "arena";
+                for (size_t i = 0; i < sizeof(kLevels)/sizeof(kLevels[0]); i++) {
+                    if (strstr(wa, kLevels[i].name)) {
+                        lvl_ptr = kLevels[i].ptr;
+                        lvl_name = kLevels[i].name;
+                        break;
+                    }
+                }
+                const uint32_t g_mgr = 0x012056F0u;
+                vm_write8(0x00F3810Cu, 0);
+                vm_write8(g_mgr + 0x545Bu, 0);
+                vm_write32(g_mgr + 0x5454u, 5);
+                vm_write32(g_mgr + 0x5504u, 1);
+                vm_write32(g_mgr + 0x5508u, 1);
+                /* Set car slot 0 = Sweet Tooth (0x384) and level name */
+                ctx->gpr[3] = g_mgr; ctx->gpr[4] = 0; ctx->gpr[5] = 0x384;
+                ctx->ctr = 0x0018E234u; ps3_indirect_call(ctx);
+                ctx->gpr[3] = g_mgr; ctx->gpr[4] = lvl_ptr;
+                ctx->ctr = 0x0018E248u; ps3_indirect_call(ctx);
+                const uint32_t ui_obj = vm_read32(0x00F4876Cu);
+                if (ui_obj) {
+                    const uint32_t vt = vm_read32(ui_obj);
+                    const uint32_t desc = vt ? vm_read32(vt + 0x44u) : 0;
+                    const uint32_t fn = desc ? vm_read32(desc) : 0;
+                    if (fn) {
+                        fprintf(stderr, "[forceworld] ui_obj=0x%08X slot+0x44 -> 0x%08X\n", ui_obj, fn);
+                        ctx->gpr[3] = ui_obj;
+                        ctx->ctr = fn;
+                        ps3_indirect_call(ctx);
+                    }
+                }
+                fprintf(stderr, "[forceworld] launching '%s' (0x%08X) levelType=5 car=0x384 oldW=0x%08X gate=0x%X -> func_0010EB0C(0x%08X)\n",
+                        lvl_name, lvl_ptr, vm_read32(0x00F384E0u), vm_read32(0x01541648u), mgr);
+                fflush(stderr);
+                vm_write32(0x01541648u, 0);
+                for (int pass = 0; pass < 4 && (vm_read32(0x00F384E0u) || vm_read32(0x00F384E4u)); pass++) {
+                    uint32_t cw = vm_read32(0x00F384E0u);
+                    if (cw) {
+                        vm_write8(cw + 0x3FCu, 1);
+                        ctx->ctr = 0x0020C7F8u; ps3_indirect_call(ctx);
+                    }
+                    if (vm_read32(0x00F384E4u)) {
+                        ctx->ctr = 0x0020C068u; ps3_indirect_call(ctx);
+                    }
+                }
+                ctx->gpr[3] = mgr;
+                ctx->ctr = 0x0010EB0Cu;
+                ps3_indirect_call(ctx);
+                uint32_t w0 = vm_read32(0x00F384E0u), w1 = vm_read32(0x00F384E4u);
+                uint32_t jq = vm_read32(0x017B0C58u + 8u);
+                fprintf(stderr, "[forceworld] after loadGame: 0x00F384E0=0x%08X (b0=%u +130=%d +3FC=%u) 0x00F384E4=0x%08X | pause=%u busy=%u cnt=%u jq=0x%08X (fn=0x%08X due=%u)\n",
+                        w0, w0 ? vm_read8(w0) : 0, w0 ? (int8_t)vm_read8(w0 + 0x130u) : -99, w0 ? vm_read8(w0 + 0x3FCu) : 0, w1,
+                        vm_read8(0x0190FC7Du), vm_read8(0x016ACB1Cu), vm_read32(0x017B0D60u), jq,
+                        jq ? vm_read32(jq + 0xCu) : 0, jq ? vm_read32(jq + 0x8u) : 0);
+                fflush(stderr);
+                return true;
             }
             /* TM_FORCEWORLD=<secs>,direct skips the dispatcher entirely and
              * calls WorldLoader::loadGame(0x00F01FC8) -- the exact call
@@ -1091,10 +1224,14 @@ void func_005BB358(ppu_context* ctx)
         fflush(stderr);
     }
 
-    /* Auto-advance from UiAttract / UiPreMenu (0x00CEF690) to UiTitle (0x00CF0628) */
+    /* Optional opt-in warp from Main Menu (0x00CEF690) -> UiTitle -> Lobby (0x00CEF590).
+     * Disabled by default so the authentic Main Menu ('ONE PLAYER / MULTI-PLAYER /
+     * QUICK ONLINE ACTION / OPTIONS') remains active and controllable via cellPad. */
+    const bool fe_auto_lobby = tm_env_bool("TM_FE_AUTO_LOBBY", 0) && !tm_env_bool("TM_NO_FE_AUTO", 0);
+
     static int attract_ticks = 0;
     static int attract_advanced = 0;
-    if (s_current_ui_vtable == 0x00CEF690u) {
+    if (fe_auto_lobby && s_current_ui_vtable == 0x00CEF690u) {
         attract_ticks++;
         if (!attract_advanced && attract_ticks >= 5 && g_ui_machine && fe_mgr) {
             attract_advanced = 1;
@@ -1116,7 +1253,7 @@ void func_005BB358(ppu_context* ctx)
     /* Auto-advance from UiTitle (0x00CF0628) to UiMainMenu (0x00CEF590) */
     static int title_ticks = 0;
     static int title_advanced = 0;
-    if (s_current_ui_vtable == 0x00CF0628u) {
+    if (fe_auto_lobby && s_current_ui_vtable == 0x00CF0628u) {
         title_ticks++;
         if (!title_advanced && title_ticks >= 10 && g_ui_machine && fe_mgr) {
             title_advanced = 1;
@@ -1135,12 +1272,30 @@ void func_005BB358(ppu_context* ctx)
         }
     }
 
-    /* Auto-advance from UiMainMenu (0x00CEF590) to UiCampaignSelect (0x00CEF810) */
+    /* Auto-advance from UiMainMenu (0x00CEF590) to UiCampaignSelect (0x00CEF810) only when requested,
+     * and dump populated fe_mgr state slots once UiMainMenu is active. */
     static int menu_ticks = 0;
     static int menu_advanced = 0;
     if (s_current_ui_vtable == 0x00CEF590u) {
         menu_ticks++;
-        if (!menu_advanced && menu_ticks >= 15 && g_ui_machine && fe_mgr) {
+        if (menu_ticks == 5 && fe_mgr) {
+            fprintf(stderr, "[fe-dump-menu] fe_mgr=0x%08X populated slots:\n", fe_mgr);
+            for (uint32_t off = 0x3A00; off <= 0x3B80; off += 4) {
+                uint32_t obj = vm_read32(fe_mgr + off);
+                if (obj >= 0x10000000u && obj < 0x30000000u) {
+                    uint32_t vt = vm_read32(obj);
+                    if (vt >= 0x00CE0000u && vt < 0x00CF2000u) {
+                        uint32_t d3 = vm_read32(vt + 12);
+                        fprintf(stderr, "  +0x%04X: obj=0x%08X vtable=0x%08X onEnter=0x%06X\n",
+                                off, obj, vt, d3 ? vm_read32(d3) : 0);
+                    }
+                }
+            }
+            fflush(stderr);
+        }
+        static int auto_camp = -1;
+        if (auto_camp < 0) auto_camp = tm_env_bool("TM_AUTO_CAMPAIGN", 0);
+        if (auto_camp && !menu_advanced && menu_ticks >= 15 && g_ui_machine && fe_mgr) {
             menu_advanced = 1;
             uint32_t target = vm_read32(fe_mgr + 0x3B2Cu); /* UiCampaignSelect (0x00CEF810) */
             if (!target) target = 0x180CF7D0u;
@@ -1170,10 +1325,12 @@ void func_005CAEA0(ppu_context* ctx)
     if (obj) {
         static int fast_legal = -1;
         if (fast_legal < 0) {
-            const char* e = getenv("TM_FAST_LEGAL");
-            fast_legal = (e && atoi(e) == 0) ? 0 : 1;
+            fast_legal = tm_env_bool("TM_FAST_LEGAL", 1);
         }
-        if (fast_legal) {
+        const uint32_t vt = vm_read32(obj);
+        const bool is_legal = (vt == 0x00CEF490u || vt == 0x00CEF290u || vt == 0x00CEF310u ||
+                               vt == 0x00CEF390u || vt == 0x00CEF410u || vt == 0x00CEF4E8u);
+        if (fast_legal && is_legal) {
             uint32_t d80 = vm_read32(obj + 0x80);
             uint32_t d84 = vm_read32(obj + 0x84);
             if (d80 >= 0x3F800000u && d80 <= 0x42700000u) {
@@ -1212,7 +1369,7 @@ void func_004AA780(ppu_context* ctx)
     const uint32_t q = p ? vm_read32(p + 0x3AB8) : 0;
     /* Clear movie active status and force skip intro movie in native recomp */
     vm_write8(0x0120AC25u, 0);
-    vm_write32(0x01A05D04u, 0);
+    tm_movie_flag_clear(__func__);
     const uint32_t b = vm_read8(0x0120AC25u);
     fprintf(stderr, "[intro] guards: [0x00F42288]=0x%08X  +0x3AB8=0x%08X  "
                     "[0x0120AC25]=%u  -> %s\n", p, q, b,
@@ -1228,7 +1385,7 @@ void func_004AAA98(ppu_context* ctx)
     const uint32_t fe_mgr = vm_read32(0x00F42288u);
 
     /* Keep movie player marked idle so FeManager UI update loop runs every frame */
-    vm_write32(0x01A05D04u, 0);
+    tm_movie_flag_clear(__func__);
     vm_write8(0x01541630u, 0);
     vm_write8(0x01541631u, 0);
 
@@ -1240,7 +1397,8 @@ void func_004AAA98(ppu_context* ctx)
 
     /* Auto-advance from UiIntroMovie (0x00CF0420) to UiTitle (0x00CF0628) or UiMainMenu (0x00CEF590) */
     static int intro_advanced = 0;
-    if (!intro_advanced && n >= 5 && fe_mgr && obj) {
+    static int no_skip = -1; if (no_skip < 0) no_skip = tm_env_bool("TM_NO_INTRO_SKIP", 0);
+    if (!intro_advanced && !no_skip && n >= 5 && fe_mgr && obj) {
         intro_advanced = 1;
         uint32_t machine = vm_read32(obj + 0x0Cu);
         if (!machine) machine = g_ui_machine;
@@ -1269,11 +1427,11 @@ void func_004AAA98(ppu_context* ctx)
 }
 void func_006AD8E8(ppu_context* ctx) {
     tm_trace("MoviePlayer::a", func_006AD8E8_lifted, ctx);
-    vm_write32(0x01A05D04u, 0);
+    tm_movie_flag_clear(__func__);
 }
 void func_006ADA38(ppu_context* ctx) {
     tm_trace("MoviePlayer::b", func_006ADA38_lifted, ctx);
-    vm_write32(0x01A05D04u, 0);
+    tm_movie_flag_clear(__func__);
 }
 void func_004AA5D8_lifted(ppu_context* ctx);
 /* Called from IntroMovie::update once its timer expires, as (7, 0x00CBECA0).
@@ -1347,7 +1505,20 @@ void func_002B8F38(ppu_context* ctx) { tm_trace("scriptFactory", func_002B8F38_l
 static void tm_fe_tick(ppu_context* ctx);
 void func_0020C7F8_lifted(ppu_context* ctx);
 void func_0020C7F8(ppu_context* ctx) {
+    uint32_t w0_pre = g_tm_fw_fired ? vm_read32(0x00F384E0u) : 0;
     tm_trace("world::0020C7F8", func_0020C7F8_lifted, ctx);
+    uint64_t orig_rc = ctx->gpr[3];
+    if (g_tm_fw_fired) {
+        static int nfw = 0;
+        uint32_t w0 = vm_read32(0x00F384E0u), w1 = vm_read32(0x00F384E4u);
+        if (nfw < 12 || w0 != w0_pre) {
+            nfw++;
+            fprintf(stderr, "[fw-trace] 0020C7F8 rc=%llu w0:0x%08X->0x%08X (b0=%u +3FC=%u +130=%d) w1=0x%08X\n",
+                    (unsigned long long)orig_rc, w0_pre, w0, w0 ? vm_read8(w0) : 0, w0 ? vm_read8(w0 + 0x3FCu) : 0,
+                    w0 ? (int8_t)vm_read8(w0 + 0x130u) : -99, w1);
+            fflush(stderr);
+        }
+    }
     tm_fe_tick(ctx);
     ctx->gpr[3] = 1;
 }
@@ -1394,7 +1565,7 @@ void func_009B2574_lifted(ppu_context* ctx);
 void func_009B2574(ppu_context* ctx)
 {
     static int skip = -1;
-    if (skip < 0) skip = getenv("TM_SKIP_BANKUNLOAD") ? 1 : 0;
+    if (skip < 0) skip = tm_env_bool("TM_SKIP_BANKUNLOAD", 0);
     if (skip) {
         static int n = 0;
         if (n++ < 4) { fprintf(stderr, "[skip] bank unload 0x009B2574(0x%08X)\n",
@@ -1451,7 +1622,7 @@ void func_009BBE60_lifted(ppu_context* ctx);
 void func_009BBE60(ppu_context* ctx)
 {
     static int silent = -1;
-    if (silent < 0) silent = getenv("TM_BRB_SILENT") ? 1 : 0;
+    if (silent < 0) silent = tm_env_bool("TM_BRB_SILENT", 0);
     if (silent) { ctx->gpr[3] = 1; return; }
     func_009BBE60_lifted(ctx);
 }
@@ -1462,7 +1633,7 @@ void func_009D7B08_lifted(ppu_context* ctx);
 void func_009D7B08(ppu_context* ctx)
 {
     static int silent = -1;
-    if (silent < 0) silent = getenv("TM_BRB_PARK") ? 1 : 0;
+    if (silent < 0) silent = tm_env_bool("TM_BRB_PARK", 0);
     if (silent) {
         const uint32_t dev = (uint32_t)ctx->gpr[31];
         fprintf(stderr, "[brbdrv] parked driver thread on dev=0x%08X\n", dev);
@@ -1486,7 +1657,7 @@ void func_009D7B08(ppu_context* ctx)
 void func_009CF718(ppu_context* ctx)
 {
     static int silent = -1;
-    if (silent < 0) silent = getenv("TM_BRB_SILENT") ? 1 : 0;
+    if (silent < 0) silent = tm_env_bool("TM_BRB_SILENT", 0);
     g_brb_cb++;
     if (silent) { ctx->gpr[3] = 0; return; }
     func_009CF718_lifted(ctx);
@@ -1498,7 +1669,7 @@ void func_009D4200(ppu_context* ctx) { g_brb_poll++; func_009D4200_lifted(ctx); 
 extern "C" void tm_brb_counters_tick(void)
 {
     static int tk = 0;
-    if (!getenv("TM_BRBDRV") || (tk++ % 60)) return;
+    if (!tm_env_bool("TM_BRBDRV", 0) || (tk++ % 60)) return;
     fprintf(stderr, "[brbcnt] cb=%ld proc=%ld poll=%ld poll_done=%ld\n",
             g_brb_cb, g_brb_proc, g_brb_poll, g_brb_poll_done);
     fflush(stderr);
@@ -1544,8 +1715,33 @@ void func_0060E500_lifted(ppu_context* ctx);
 void func_0060E500(ppu_context* ctx) { tm_trace("cw::0060E500", func_0060E500_lifted, ctx); }
 void func_00617730_lifted(ppu_context* ctx);
 void func_00617730(ppu_context* ctx) { tm_trace("cw::00617730", func_00617730_lifted, ctx); }
+static uint32_t g_sub_pgm_fh = 0;
 void func_007675D0_lifted(ppu_context* ctx);
-void func_007675D0(ppu_context* ctx) { tm_trace("cw::007675D0", func_007675D0_lifted, ctx); }
+void func_007675D0(ppu_context* ctx) {
+    uint32_t cnt = (uint32_t)ctx->gpr[3];
+    uint32_t arr = (uint32_t)ctx->gpr[4];
+    uint32_t lr = (uint32_t)ctx->lr;
+    uint32_t ops[8];
+    uint32_t nops = (cnt <= 8 && arr > 0x01000000u && arr < 0x50000000u) ? cnt : 0;
+    for (uint32_t i = 0; i < nops; i++) ops[i] = vm_read32(arr + i * 4);
+    tm_trace("cw::007675D0", func_007675D0_lifted, ctx);
+    uint32_t rc = (uint32_t)ctx->gpr[3];
+    for (uint32_t i = 0; i < nops; i++) {
+        uint32_t op = ops[i];
+        if (op > 0x01000000u && op < 0x50000000u &&
+            ((g_sub_pgm_fh && vm_read32(op + 0xA0) == g_sub_pgm_fh) || vm_read32(op + 0xC0) == 0x13B7AC80u)) {
+            static int s_subop_cnt = 0;
+            if (rc != 0 || s_subop_cnt < 40) {
+                s_subop_cnt++;
+                fprintf(stderr, "[sub-op-wait] cnt=%u op=0x%08X rc=0x%08X cmd=0x%X err=0x%08X st=%u +90:%08X +98:%X len=0x%X off=0x%llX dst=0x%08X lr=0x%08X\n",
+                        cnt, op, rc, vm_read32(op + 0x40), vm_read32(op + 0x44),
+                        vm_read32(op + 0xD0), vm_read32(op + 0x90), vm_read32(op + 0x98),
+                        (uint32_t)vm_read64(op + 0xA8), (unsigned long long)vm_read64(op + 0xB8),
+                        vm_read32(op + 0xC0), lr);
+            }
+        }
+    }
+}
 void func_0076B66C_lifted(ppu_context* ctx);
 void func_0076B66C(ppu_context* ctx) { tm_trace("cw::0076B66C", func_0076B66C_lifted, ctx); }
 void func_004BDA30_lifted(ppu_context* ctx);
@@ -1658,12 +1854,14 @@ void func_001DB6B8(ppu_context* ctx)
     if (skip_secs >= 0 && !skipped && el >= (uint32_t)skip_secs) {
         const uint32_t mgr = vm_read32(0x00F4A248u);
         if (mgr) {
+            const uint8_t back_to_ui = vm_read8(0x00F3810Cu);
+            const uint32_t target_fn = back_to_ui ? 0x0010EC08u : 0x0010EB0Cu;
             skipped = 1;
-            fprintf(stderr, "[movie] auto-skipping movie after %u s -> func_0010EC08(mgr=0x%08X)\n", el, mgr);
+            fprintf(stderr, "[movie] auto-skipping movie after %u s (0x00F3810C=%u) -> func_%08X(mgr=0x%08X)\n",
+                    el, back_to_ui, target_fn, mgr);
             fflush(stderr);
-            vm_write8(0x00F3810Cu, 1);
             ctx->gpr[3] = mgr;
-            ctx->ctr = 0x0010EC08u;
+            ctx->ctr = target_fn;
             ps3_indirect_call(ctx);
             return;
         }
@@ -1680,7 +1878,22 @@ void func_001DB4FC(ppu_context* ctx) { tm_trace("movieObj::ctor", func_001DB4FC_
 void func_0014BCA8_lifted(ppu_context* ctx);
 void func_0020C698_lifted(ppu_context* ctx);
 void func_0014BCA8(ppu_context* ctx) { tm_trace("boot::seq", func_0014BCA8_lifted, ctx); }
-void func_0020C698(ppu_context* ctx) { tm_trace("WorldLoader::setup", func_0020C698_lifted, ctx); }
+void func_0020C698(ppu_context* ctx) {
+    if (g_tm_fw_fired) {
+        uint32_t w0 = vm_read32(0x00F384E0u); char buf[128];
+        fprintf(stderr, "[fw-trace] WorldLoader::setup ENTER w0=0x%08X str='%s' b0=%u +3FC=%u\n",
+                w0, w0 ? tm_gstr(w0, buf, sizeof buf) : "", w0 ? vm_read8(w0) : 0, w0 ? vm_read8(w0 + 0x3FCu) : 0);
+        fflush(stderr);
+    }
+    tm_trace("WorldLoader::setup", func_0020C698_lifted, ctx);
+    if (g_tm_fw_fired) {
+        uint32_t w0 = vm_read32(0x00F384E0u);
+        fprintf(stderr, "[fw-trace] WorldLoader::setup EXIT rc=%llu w0=0x%08X (b0=%u +3FC=%u +130=%d)\n",
+                (unsigned long long)ctx->gpr[3], w0, w0 ? vm_read8(w0) : 0, w0 ? vm_read8(w0 + 0x3FCu) : 0,
+                w0 ? (int8_t)vm_read8(w0 + 0x130u) : -99);
+        fflush(stderr);
+    }
+}
 void func_00360B90_lifted(ppu_context* ctx);
 void func_00360C3C_lifted(ppu_context* ctx);
 void func_00360E84_lifted(ppu_context* ctx);
@@ -1695,10 +1908,11 @@ void func_00360B90(ppu_context* ctx) { tm_trace("AL::b90", func_00360B90_lifted,
 void func_00360C3C(ppu_context* ctx)
 {
     char nm[192];
+    tm_gstr((uint32_t)ctx->gpr[4], nm, sizeof nm);
+    int interesting = (strstr(nm, "pgm") != nullptr || strstr(nm, "vram") != nullptr || strstr(nm, "dram") != nullptr);
+    uint32_t a3 = (uint32_t)ctx->gpr[3];
     if (tm_trace_on()) {
-        const uint32_t a3 = (uint32_t)ctx->gpr[3];
-        fprintf(stderr, "[trace] AL::c3c path=%s  arg0=0x%08X [",
-                tm_gstr((uint32_t)ctx->gpr[4], nm, sizeof nm), a3);
+        fprintf(stderr, "[trace] AL::c3c path=%s  arg0=0x%08X [", nm, a3);
         for (uint32_t o = 0; o < 0x20; o += 4) fprintf(stderr, " %08X", vm_read32(a3 + o));
         fprintf(stderr, " ]\n");
         /* Is the contents.dat we inflated still where the title parses it? */
@@ -1709,6 +1923,13 @@ void func_00360C3C(ppu_context* ctx)
         }
     }
     tm_trace("AL::c3c", func_00360C3C_lifted, ctx);
+    if (interesting) {
+        uint32_t fh = vm_read32(a3);
+        if (strstr(nm, "suburbs.pgm")) g_sub_pgm_fh = fh;
+        fprintf(stderr, "[stream-open] path='%s' arg0=0x%08X fh=0x%08X sched=0x%08X lr=0x%08X\n",
+                nm, a3, fh, vm_read32(a3 + 4), (uint32_t)ctx->lr);
+        fflush(stderr);
+    }
 }
 void func_00360E84(ppu_context* ctx) { tm_trace("AL::e84", func_00360E84_lifted, ctx); }
 void func_00360EBC(ppu_context* ctx) { tm_trace("AL::ebc", func_00360EBC_lifted, ctx); }
@@ -1720,8 +1941,8 @@ void func_0064BA08(ppu_context* ctx)
   { static long n = 0; const uint32_t o = (uint32_t)ctx->gpr[3];  /* TEMP: render gates */
     if ((n++ % 50) == 0) fprintf(stderr, "[frame] #%ld obj=0x%08X +250=%u +251=%u +252=%u +88=%u\n", n, o,
         vm_read8(o + 0x250), vm_read8(o + 0x251), vm_read8(o + 0x252), vm_read8(o + 0x88)); }
-  { static int f3 = -1; if (f3 < 0) f3 = getenv("TM_FORCE3D") ? 1 : 0;   /* TEMP probe */
-    if (f3) { vm_write8((uint32_t)ctx->gpr[3] + 0x252, 1); if (f3 && getenv("TM_FORCE3D")[0] == '2') vm_write8((uint32_t)ctx->gpr[3] + 0x88, 1); } }
+  { static int f3 = -1; if (f3 < 0) f3 = tm_env_bool("TM_FORCE3D", 0);   /* TEMP probe */
+    if (f3) { const char* f3e = getenv("TM_FORCE3D"); vm_write8((uint32_t)ctx->gpr[3] + 0x252, 1); if (f3e && f3e[0] == '2') vm_write8((uint32_t)ctx->gpr[3] + 0x88, 1); } }
   if (tm_trace_verbose()) tm_trace("updateLoadBar::frame", func_0064BA08_lifted, ctx); else func_0064BA08_lifted(ctx); }
 
 /* The two writers of the load-complete byte at 0x0190FC89. The boot sequence
@@ -1872,14 +2093,6 @@ static void cellSpursCreateTask2(ppu_context* ctx)
                                            (void*)(uintptr_t)eaContext,
                                            sizeContext, lsPattern, argument);
     ctx->gpr[3] = (uint64_t)(int64_t)rc;
-}
-
-/* Size of the per-task context save area. The runtime keeps no save area, but
- * the title allocates from this, so a zero would give every task a null
- * context. One SPU local store is the SDK's maximum and always sufficient. */
-static void cellSpursTaskGetContextSaveAreaSize(ppu_context* ctx)
-{
-    ctx->gpr[3] = 0x40000;
 }
 
 /* Probe: _cellSpursSendSignal (0xE0A6DBE4). The SPU task parks in WAIT_SIGNAL
@@ -2048,7 +2261,7 @@ extern "C" int32_t cellSpursEventFlagSet(void* eventFlag, uint16_t bits);
 static void tm_brb_ack_tick(void)
 {
     static int on = -1;
-    if (on < 0) on = getenv("TM_BRB_ACK") ? 1 : 0;
+    if (on < 0) on = tm_env_bool("TM_BRB_ACK", 0);
     if (!on || !vm_base) return;
     const uint32_t r30 = vm_read32(0x00F21930u - 0x60F8u);
     if (!r30) return;
@@ -2097,7 +2310,7 @@ static void tm_brb_ack_tick(void)
 #include <map>
 static void tm_heapwalk_tick(void)
 {
-    static int on = -1; if (on < 0) on = getenv("TM_HEAPWALK") ? 1 : 0;
+    static int on = -1; if (on < 0) on = tm_env_bool("TM_HEAPWALK", 0);
     static int tk = 0;
     if (!on || !vm_base || (tk++ % 600) != 599) return;
     const uint32_t base = 0x40000000u, end = base + 0xF00000u;
@@ -2143,7 +2356,7 @@ extern "C" void tm_memdump_tick(void)
     tm_brb_ack_tick();
     tm_brb_counters_tick();
     /* TEMP: BRB driver state, once a second */
-    { static int on = -1; if (on < 0) on = getenv("TM_BRBDRV") ? 1 : 0;
+    { static int on = -1; if (on < 0) on = tm_env_bool("TM_BRBDRV", 0);
       static int tk = 0;
       if (on && vm_base && (tk++ % 60) == 0) {
           const uint32_t d = 0x01AA8700u;
@@ -2157,10 +2370,10 @@ extern "C" void tm_memdump_tick(void)
     static uint32_t addr = 0, count = 32;
     if (on < 0) {
         const char* e = getenv("TM_MEMDUMP");
-        on = e ? 1 : 0;
-        if (e) { addr = (uint32_t)strtoul(e, nullptr, 16);
-                 const char* c = strchr(e, 44);
-                 if (c) count = (uint32_t)strtoul(c + 1, nullptr, 0); }
+        on = (e && *e && strcmp(e, "0") != 0) ? 1 : 0;
+        if (on) { addr = (uint32_t)strtoul(e, nullptr, 16);
+                  const char* c = strchr(e, 44);
+                  if (c) count = (uint32_t)strtoul(c + 1, nullptr, 0); }
     }
     if (!on || !addr) return;
     static int tick = 0;
@@ -2180,7 +2393,7 @@ extern "C" void tm_memdump_tick(void)
 extern "C" void tm_fifowatch_tick(void)
 {
     static int on = -1;
-    if (on < 0) on = getenv("TM_FIFOWATCH") ? 1 : 0;
+    if (on < 0) on = tm_env_bool("TM_FIFOWATCH", 0);
     if (!on || !vm_base) return;
     static unsigned long long next = 0;
     const unsigned long long now = (unsigned long long)time(NULL);
@@ -2357,24 +2570,23 @@ void func_0099790C(ppu_context* ctx)
     }
 
     if (on && req) {
-        const uint32_t dst    = vm_read32(req + REQ_DST);
-        const uint32_t src    = vm_read32(req + REQ_SRC);
-        const uint32_t srclen = vm_read32(req + REQ_SRCLEN);
-        uint32_t dstlen       = vm_read32(req + REQ_DSTLEN);
-        if (!dstlen) dstlen   = vm_read32(req + REQ_DSTLEN2);
+        const uint32_t dst       = vm_read32(req + REQ_DST);
+        const uint32_t src       = vm_read32(req + REQ_SRC);
+        const uint32_t srclen    = vm_read32(req + REQ_SRCLEN);
+        uint32_t dstlen          = vm_read32(req + REQ_DSTLEN);
+        if (!dstlen) dstlen      = vm_read32(req + REQ_DSTLEN2);
 
-        /* Edge decompresses IN PLACE: the request's +0x14 buffer holds the
-         * compressed file (the +0x0C source points 0x45 bytes into it) and the
-         * title parses the inflated result back out of that same buffer, not
-         * out of +0x00. Writing to +0x00 left it parsing the still-compressed
-         * bytes, which is why every member name came out empty or garbage.
-         * Inflate to the host first so the source survives being overwritten. */
-        const uint32_t inplace = vm_read32(req + REQ_BUF);
-        if (src && srclen && dstlen && vm_base && (inplace || dst)) {
-            /* Attribute the load time: how much of the wall clock between two
-             * requests is actually spent inflating, and how much is the title
-             * getting back here. A full archive is ~2900 blocks, so a hundred
-             * milliseconds of round trip per block is ten minutes of loading. */
+        /* Edge request variants (verified against func_0099768C / func_0099790C):
+         *  - inplace (+0x14) != 0, out_dst (+0x1C) == 0: full block into inplace.
+         *  - inplace (+0x14) != 0, out_dst (+0x1C) != 0: full block into inplace,
+         *    then lifted epilogue copies [slice_off..+slice_len) to out_dst.
+         *  - inplace (+0x14) == 0, out_dst (+0x1C) != 0: SPU Edge decompresses and
+         *    DMAs [slice_off (+0x20) .. +slice_len (+0x24)) directly to out_dst. */
+        const uint32_t inplace   = vm_read32(req + REQ_BUF);
+        const uint32_t out_dst   = vm_read32(req + 0x1Cu);
+        const uint32_t slice_off = vm_read32(req + 0x20u);
+        const uint32_t slice_len = vm_read32(req + 0x24u);
+        if (src && srclen && dstlen && vm_base && (inplace || out_dst || dst)) {
             using clk = std::chrono::steady_clock;
             static clk::time_point last;
             static double gap_ms = 0, work_ms = 0;
@@ -2395,24 +2607,32 @@ void func_0099790C(ppu_context* ctx)
             { static uint32_t glo = 1, ghi = 0;
               if (glo == 1) { const char* e = getenv("TM_GUARD"); glo = 0;
                   if (e) { glo = (uint32_t)strtoul(e, nullptr, 16); const char* c = strchr(e, ':'); ghi = c ? (uint32_t)strtoul(c + 1, nullptr, 16) : 0; } }
-              const uint32_t d0 = inplace ? inplace : dst;
+              const uint32_t d0 = inplace ? inplace : (out_dst ? out_dst : dst);
               if (ghi && n > 0 && d0 < ghi && d0 + (uint32_t)n > glo)
                   fprintf(stderr, "[guard] edge inflate req=0x%08X writes 0x%08X..0x%08X (%d bytes, inplace=%d dstlen=%u)\n",
                           req, d0, d0 + (uint32_t)n, n, inplace ? 1 : 0, dstlen); }
+            const uint32_t d_out = inplace ? inplace : (out_dst ? out_dst : dst);
             if (n >= 0) {
-                if (inplace) memcpy(vm_base + inplace, tmp, (size_t)n);
-                else         memcpy(vm_base + dst,     tmp, (size_t)n);
+                if (inplace) {
+                    memcpy(vm_base + inplace, tmp, (size_t)n);
+                } else if (out_dst) {
+                    if (slice_off < (uint32_t)n) {
+                        uint32_t avail = (uint32_t)n - slice_off;
+                        uint32_t cp = (slice_len && slice_len < avail) ? slice_len : avail;
+                        memcpy(vm_base + out_dst, tmp + slice_off, cp);
+                    }
+                } else {
+                    memcpy(vm_base + dst, tmp, (size_t)n);
+                }
             }
             free(tmp);
             static long long done = 0;
             if (n >= 0) {
-                g_edge_dst = inplace ? inplace : dst;
+                g_edge_dst = d_out;
                 vm_write32(req + REQ_BUSY, 0);   /* the wait loop polls this */
                 g_edge_bytes += (uint64_t)n;
-                /* Track where the archive lands in RSX local memory. The UI
-                 * samples a texture at local offset 0x2ACD800; knowing the
-                 * inflated range says whether the loader ever writes there. */
-                { const uint32_t d = inplace ? inplace : dst;
+                /* Track where the archive lands in RSX local memory. */
+                { const uint32_t d = d_out;
                   static uint32_t lo = 0xFFFFFFFFu, hi = 0;
                   static long long nloc = 0;
                   /* Same for main memory: the menu samples textures at
@@ -2503,7 +2723,7 @@ void func_004DC490(ppu_context* ctx) { (void)ctx; }
 void func_004DBB70(ppu_context* ctx)
 {
     const char* e = getenv("TM_HEAP_MB");
-    const uint32_t mb = e ? (uint32_t)atoi(e) : 15;
+    const uint32_t mb = (e && *e) ? (uint32_t)atoi(e) : 64;
     if (mb <= 15) { func_004DBB70_lifted(ctx); return; }
     const uint32_t size = mb << 20, g = 0x017B0000u;
     const uint64_t lr = ctx->lr;
@@ -2543,14 +2763,21 @@ void func_00678CE8(ppu_context* ctx)
     static int n = 0;
     if (vm_read32(0x019307D0u) && n++ < 4) {
         char b[48]; snprintf(b, sizeof b, "wait lr=0x%08X", (uint32_t)ctx->lr); tm_pool_dump(b);
+        uint32_t vis = vm_read32(0x019307C4u);
+        if (vis > 0x01000000u && vis < 0x40000000u) {
+            fprintf(stderr, "[pool-vis] vis=0x%08X bytes:", vis);
+            for (int i = 0; i < 32; i++) fprintf(stderr, " %02X", vm_read8(vis + i));
+            fprintf(stderr, "\n");
+        }
     }
     /* TM_POOL_NOWAIT=1: give up after ~200 ms instead of sleep-polling forever.
      * ponytail: stand-in until whatever leaves the word at 1 is found. */
     static int nowait = -1;
-    if (nowait < 0) nowait = getenv("TM_POOL_NOWAIT") ? 1 : 0;
+    if (nowait < 0) nowait = tm_env_bool("TM_POOL_NOWAIT", 1);
     if (nowait) {
         /* TM_POOL_NOWAIT=<n>: give the producer n polls of 100 us (default 0). */
-        static int polls = -1; if (polls < 0) polls = atoi(getenv("TM_POOL_NOWAIT"));
+        static int polls = -1;
+        if (polls < 0) { const char* pe = getenv("TM_POOL_NOWAIT"); polls = (pe && *pe) ? atoi(pe) : 0; }
         for (int i = 0; i < polls && vm_read32(0x019307D0u); i++)
             std::this_thread::sleep_for(std::chrono::microseconds(100));
         return;
@@ -2558,6 +2785,50 @@ void func_00678CE8(ppu_context* ctx)
     func_00678CE8_lifted(ctx);
 }
 extern "C" void ppu_dump_guest_stack(ppu_context* ctx, const char* tag);
+extern "C" int32_t cellGcmAddressToOffset(uint32_t address, uint32_t* offset);
+static void probe_cellGcmAddressToOffset(ppu_context* ctx)
+{
+    uint32_t ea = (uint32_t)ctx->gpr[3];
+    uint32_t off_ea = (uint32_t)ctx->gpr[4];
+    int32_t rc = cellGcmAddressToOffset(ea, (uint32_t*)(uintptr_t)off_ea);
+    if (rc != 0 || (ea >= 0x40000000u && ea < 0xC0000000u)) {
+        static int k = 0;
+        if (k++ < 6) {
+            fprintf(stderr, "[a2o-probe] ea=0x%08X rc=0x%08X lr=0x%08X off=0x%08X r13=0x%08X\n",
+                    ea, (uint32_t)rc, (uint32_t)ctx->lr, off_ea ? vm_read32(off_ea) : 0, (uint32_t)ctx->gpr[13]);
+            if (k == 1 && (uint32_t)ctx->gpr[30] > 0x01000000u && (uint32_t)ctx->gpr[30] < 0x20000000u) {
+                uint32_t slot = (uint32_t)ctx->gpr[30];
+                uint32_t mgr  = (uint32_t)ctx->gpr[31];
+                uint32_t r27  = (uint32_t)ctx->gpr[27];
+                uint32_t r25  = (uint32_t)ctx->gpr[25];
+                uint32_t fidx = vm_read32(slot + 4);
+                uint32_t fname_ea = mgr + 8 + fidx * 0x158 + 0x100;
+                fprintf(stderr, "[a2o-slot] mgr=0x%08X slot=0x%08X fidx=%u fname='%s' off=[0x%08X..0x%08X] r27=0x%08X r25=0x%08X op=0x%08X\n",
+                        mgr, slot, fidx, (fname_ea < 0x20000000u) ? (const char*)(vm_base + fname_ea) : "?",
+                        vm_read32(slot + 8), vm_read32(slot + 0xC), r27, r25, vm_read32(slot + 0x10));
+                uint32_t op = vm_read32(slot + 0x10);
+                if (op > 0x01000000u && op < 0x50000000u) {
+                    fprintf(stderr, "[a2o-op] +90:%08X +94:%08X +98:%08X +9C:%08X +A0:%08X +A8:%08X +B8:%08X +C0:%08X\n",
+                            vm_read32(op+0x90), vm_read32(op+0x94), vm_read32(op+0x98), vm_read32(op+0x9C),
+                            vm_read32(op+0xA0), vm_read32(op+0xA8), vm_read32(op+0xB8), vm_read32(op+0xC0));
+                }
+                if (r27 > 0x01000000u && r27 < 0x30000000u) {
+                    fprintf(stderr, "[a2o-r27] ");
+                    for (int i = 0; i < 64; i += 4) fprintf(stderr, "%08X ", vm_read32(r27 + i));
+                    fprintf(stderr, "\n");
+                }
+                if (r25 > 0x01000000u && r25 < 0x30000000u) {
+                    fprintf(stderr, "[a2o-r25] ");
+                    for (int i = 0; i < 48; i += 4) fprintf(stderr, "%08X ", vm_read32(r25 + i));
+                    fprintf(stderr, "\n");
+                }
+            }
+            ppu_dump_guest_stack(ctx, "a2o");
+            fflush(stderr);
+        }
+    }
+    ctx->gpr[3] = (uint64_t)(int64_t)rc;
+}
 extern ppu_context* g_tm_main_ctx;
 extern "C" void tm_pool_tick(void)
 {
@@ -2567,10 +2838,12 @@ extern "C" void tm_pool_tick(void)
       if (std::chrono::steady_clock::now() >= nx) { nx += std::chrono::milliseconds(20);
           for (int i = 0; i < g_ntasksets; i++) spu_taskset_start_pending(g_tasksets[i]); } }
     /* TEMP TM_MAINSTACK=1: main thread's guest stack every ~30 s. */
-    { static int on = -1; if (on < 0) on = getenv("TM_MAINSTACK") ? 1 : 0;
+    { static int on = -1; if (on < 0) on = tm_env_bool("TM_MAINSTACK", 0);
       static auto next = std::chrono::steady_clock::now();
       if (on && g_tm_main_ctx && std::chrono::steady_clock::now() >= next) {
-          next += std::chrono::seconds(atoi(getenv("TM_MAINSTACK")) > 1 ? atoi(getenv("TM_MAINSTACK")) : 10); { extern volatile long g_tm_players_upd, g_tm_frame_upd; fprintf(stderr, "[upd] players=%ld frame=%ld\n", g_tm_players_upd, g_tm_frame_upd); } fprintf(stderr, "[query-count] %u\n", vm_read32(0x0190E7D8u)); { uint32_t sp = (uint32_t)g_tm_main_ctx->gpr[1]; fprintf(stderr, "[mainchain] lr=0x%08X", (uint32_t)g_tm_main_ctx->lr); for (int i = 0; i < 40 && sp > 0x01000000u && sp < 0x40000000u; i++) { const uint32_t nsp = vm_read32(sp + 4); if (nsp <= sp) break; fprintf(stderr, " %08X", vm_read32(nsp + 0x14)); sp = nsp; } fprintf(stderr, "\n"); } ppu_dump_guest_stack(g_tm_main_ctx, "main"); { if (g_tm_postfx_ctx) { uint32_t sp = (uint32_t)g_tm_postfx_ctx->gpr[1]; fprintf(stderr, "[postfxchain] lr=0x%08X", (uint32_t)g_tm_postfx_ctx->lr); for (int i = 0; i < 40 && sp > 0x01000000u && sp < 0x40000000u; i++) { const uint32_t nsp = vm_read32(sp + 4); if (nsp <= sp) break; fprintf(stderr, " %08X", vm_read32(nsp + 0x14)); sp = nsp; } fprintf(stderr, "\n"); } } const ppu_context* m = g_tm_main_ctx; fprintf(stderr, "[main-fpr] f14=%g f18=%g f25=%g f13=%g f30=%g f31=%g\n", m->fpr[14], m->fpr[18], m->fpr[25], m->fpr[13], m->fpr[30], m->fpr[31]); } }
+          const char* mse = getenv("TM_MAINSTACK");
+          int msi = (mse && atoi(mse) > 1) ? atoi(mse) : 10;
+          next += std::chrono::seconds(msi); { extern volatile long g_tm_players_upd, g_tm_frame_upd; fprintf(stderr, "[upd] players=%ld frame=%ld\n", g_tm_players_upd, g_tm_frame_upd); } fprintf(stderr, "[query-count] %u\n", vm_read32(0x0190E7D8u)); { uint32_t sp = (uint32_t)g_tm_main_ctx->gpr[1]; fprintf(stderr, "[mainchain] lr=0x%08X", (uint32_t)g_tm_main_ctx->lr); for (int i = 0; i < 40 && sp > 0x01000000u && sp < 0x40000000u; i++) { const uint32_t nsp = vm_read32(sp + 4); if (nsp <= sp) break; fprintf(stderr, " %08X", vm_read32(nsp + 0x14)); sp = nsp; } fprintf(stderr, "\n"); } ppu_dump_guest_stack(g_tm_main_ctx, "main"); { if (g_tm_postfx_ctx) { uint32_t sp = (uint32_t)g_tm_postfx_ctx->gpr[1]; fprintf(stderr, "[postfxchain] lr=0x%08X", (uint32_t)g_tm_postfx_ctx->lr); for (int i = 0; i < 40 && sp > 0x01000000u && sp < 0x40000000u; i++) { const uint32_t nsp = vm_read32(sp + 4); if (nsp <= sp) break; fprintf(stderr, " %08X", vm_read32(nsp + 0x14)); sp = nsp; } fprintf(stderr, "\n"); } } const ppu_context* m = g_tm_main_ctx; fprintf(stderr, "[main-fpr] f14=%g f18=%g f25=%g f13=%g f30=%g f31=%g\n", m->fpr[14], m->fpr[18], m->fpr[25], m->fpr[13], m->fpr[30], m->fpr[31]); } }
     static uint32_t last = 0; static int n = 0;
     if (!vm_base) return;
     /* TEMP TM_TS2DUMP=<taskset ea>: every ~20 s, the 128 task_exit_code states
@@ -2620,7 +2893,7 @@ void tm_toi_nan(ppu_context* ctx)
 static void tm_fe_tick(ppu_context* ctx)
 {
     /* Always keep movie player inactive so FE doesn't suspend */
-    vm_write32(0x01A05D04u, 0);
+    tm_movie_flag_clear(__func__);
 
     const uint32_t fe_mgr = vm_read32(0x00F42288u);
     if (!fe_mgr) return;
@@ -2635,6 +2908,30 @@ static void tm_fe_tick(ppu_context* ctx)
                 tick_cnt, s_current_ui_vtable, machine, fe_mgr);
         fflush(stderr);
     }
+
+    /* TM_ATTRACT_DIAG=1: while the machine sits in UiAttract, dump what its
+     * handler func_0047FCD0 reads: (state+0x88)->+0x30, the movie word, and the
+     * state's own flag fields. Reads are range-checked first. */
+    if (s_current_ui_vtable == 0x00CEF690u && tm_env_bool("TM_ATTRACT_DIAG", 0) &&
+        (tick_cnt % 30) == 0) {
+        const uint32_t st = g_ui_cur_state;
+        const uint32_t p88 = tm_addr_ok(st) ? vm_read32(st + 0x88) : 0;
+        const int p88ok = tm_addr_ok(p88);
+        const uint32_t gobj = vm_read32(0x00F4876Cu);   /* (0xF5<<16)-0x7894 */
+        fprintf(stderr, "[attract-diag] tick=%d st=0x%08X +0x58=0x%08X +0x7D=%u +0x7F=%u "
+                "+0x88=0x%08X status(+0x30)=%s%d movieword[01A05D04]=0x%08X "
+                "mgr[F4876C]=0x%08X 120AC25=%u\n",
+                tick_cnt, st,
+                tm_addr_ok(st) ? vm_read32(st + 0x58) : 0,
+                tm_addr_ok(st) ? vm_read8(st + 0x7D) : 0,
+                tm_addr_ok(st) ? vm_read8(st + 0x7F) : 0,
+                p88, p88ok ? "" : "INVALID/", p88ok ? (int)(int8_t)vm_read8(p88 + 0x30) : -999,
+                vm_read32(0x01A05D04u), gobj, vm_read8(0x0120AC25u));
+        fflush(stderr);
+    }
+
+    const bool fe_auto_lobby = tm_env_bool("TM_FE_AUTO_LOBBY", 0) && !tm_env_bool("TM_NO_FE_AUTO", 0);
+    if (!fe_auto_lobby) return;
 
     static int attract_ticks = 0;
     static bool attract_done = false;
@@ -2684,7 +2981,9 @@ static void tm_fe_tick(ppu_context* ctx)
     static bool menu_done = false;
     if (s_current_ui_vtable == 0x00CEF590u) { /* UiMainMenu ("SELECT GAME CATEGORY") */
         menu_ticks++;
-        if (!menu_done && menu_ticks >= 15) {
+        static int auto_camp = -1;
+        if (auto_camp < 0) auto_camp = tm_env_bool("TM_AUTO_CAMPAIGN", 0);
+        if (auto_camp && !menu_done && menu_ticks >= 15) {
             menu_done = true;
             /* Advance to UiCampaignSelect (0x00CEF810, fe_mgr + 0x3B2C) */
             uint32_t target = vm_read32(fe_mgr + 0x3B2Cu);
@@ -2710,6 +3009,19 @@ void func_0010C898_lifted(ppu_context* ctx);
 void func_0010C898(ppu_context* ctx) {
     g_tm_frame_upd++;
     tm_fe_tick(ctx);
+    {
+        static int fw = -1; if (fw < 0) fw = getenv("TM_FORCEWORLD") ? 1 : 0;
+        if (fw && (g_tm_frame_upd % 60 == 1)) {
+            uint32_t w0 = vm_read32(0x00F384E0u), w1 = vm_read32(0x00F384E4u), jq = vm_read32(0x017B0C58u + 8u);
+            if (w0 || w1 || jq) {
+                fprintf(stderr, "[fw-tick] #%ld w0=0x%08X(b0=%u,+130=%d,+3FC=%u) w1=0x%08X pause=%u busy=%u cnt=%u jq=0x%08X(fn=0x%08X,due=%u)\n",
+                        g_tm_frame_upd, w0, w0 ? vm_read8(w0) : 0, w0 ? (int8_t)vm_read8(w0 + 0x130u) : -99, w0 ? vm_read8(w0 + 0x3FCu) : 0, w1,
+                        vm_read8(0x0190FC7Du), vm_read8(0x016ACB1Cu), vm_read32(0x017B0D60u), jq,
+                        jq ? vm_read32(jq + 0xCu) : 0, jq ? vm_read32(jq + 0x8u) : 0);
+                fflush(stderr);
+            }
+        }
+    }
     func_0010C898_lifted(ctx);
 }
 

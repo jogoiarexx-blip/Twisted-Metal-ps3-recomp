@@ -125,6 +125,22 @@ extern "C" int tm_inflate(uint8_t* out, uint32_t out_cap, const uint8_t* src, ui
 {
     if (!out || !src || src_len < 1) return -1;
 
+    /* Guard against in-place decompression (e.g. PSARC chunk staged at the tail
+     * of its 64 KB output buffer): if output overtakes unread input, inflating
+     * directly into `out` would clobber `src`. */
+    uint8_t stack_src[65536];
+    uint8_t* heap_src = nullptr;
+    const bool overlaps = (out < src + src_len) && (src < out + out_cap);
+    if (overlaps) {
+        uint8_t* copy = (src_len <= sizeof(stack_src))
+            ? stack_src
+            : (heap_src = new uint8_t[src_len]);
+        if (!copy) return -1;
+        memcpy(copy, src, src_len);
+        src = copy;
+    }
+    auto free_copy = [&]() { delete[] heap_src; };
+
     uint32_t start = 0;
     if (src_len >= 2 && (src[0] & 0x0F) == 8 && ((src[0] << 8) | src[1]) % 31 == 0)
         start = 2;   /* zlib header (RFC 1950) */
@@ -135,14 +151,14 @@ extern "C" int tm_inflate(uint8_t* out, uint32_t out_cap, const uint8_t* src, ui
     for (;;) {
         const int final = b.bit();
         const int type = (int)b.bits(2);
-        if (b.bad) return -1;
+        if (b.bad) { free_copy(); return -1; }
 
         if (type == 0) {                        /* stored */
             b.bitcnt = 0;
-            if (b.pos + 4 > b.len) return -1;
+            if (b.pos + 4 > b.len) { free_copy(); return -1; }
             const uint32_t n = (uint32_t)src[b.pos] | ((uint32_t)src[b.pos + 1] << 8);
             b.pos += 4;
-            if (b.pos + n > b.len || written + n > out_cap) return -1;
+            if (b.pos + n > b.len || written + n > out_cap) { free_copy(); return -1; }
             memcpy(out + written, src + b.pos, n);
             b.pos += n;
             written += n;
@@ -163,7 +179,7 @@ extern "C" int tm_inflate(uint8_t* out, uint32_t out_cap, const uint8_t* src, ui
                 const int hlit  = (int)b.bits(5) + 257;
                 const int hdist = (int)b.bits(5) + 1;
                 const int hclen = (int)b.bits(4) + 4;
-                if (hlit > 286 || hdist > 30) return -1;
+                if (hlit > 286 || hdist > 30) { free_copy(); return -1; }
 
                 uint8_t cl[19] = {0};
                 for (int i = 0; i < hclen; i++) cl[ORDER[i]] = (uint8_t)b.bits(3);
@@ -174,11 +190,11 @@ extern "C" int tm_inflate(uint8_t* out, uint32_t out_cap, const uint8_t* src, ui
                 int i = 0;
                 while (i < hlit + hdist) {
                     const int sym = huff_decode(b, &clh);
-                    if (sym < 0 || b.bad) return -1;
+                    if (sym < 0 || b.bad) { free_copy(); return -1; }
                     if (sym < 16) {
                         lengths[i++] = (uint8_t)sym;
                     } else if (sym == 16) {
-                        if (!i) return -1;
+                        if (!i) { free_copy(); return -1; }
                         const uint8_t prev = lengths[i - 1];
                         for (int r = 3 + (int)b.bits(2); r && i < hlit + hdist; r--)
                             lengths[i++] = prev;
@@ -194,14 +210,16 @@ extern "C" int tm_inflate(uint8_t* out, uint32_t out_cap, const uint8_t* src, ui
                 huff_build(&dist, lengths + hlit, hdist);
             }
             const int n = inflate_block(b, out, out_cap, written, &lit, &dist);
-            if (n < 0) return -1;
+            if (n < 0) { free_copy(); return -1; }
             written = (uint32_t)n;
         } else {
+            free_copy();
             return -1;                          /* type 3 is reserved */
         }
         if (final) break;
-        if (b.bad) return -1;
+        if (b.bad) { free_copy(); return -1; }
     }
+    free_copy();
     return (int)written;
 }
 

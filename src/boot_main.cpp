@@ -134,7 +134,11 @@ static void derive_vfs_root(const char* eboot)
     strncpy(s_vfs_root, eboot, sizeof s_vfs_root - 1);
     for (char* p = s_vfs_root; *p; p++) if (*p == '\\') *p = '/';
     /* strip three trailing components: EBOOT.elf / USRDIR / PS3_GAME */
-    for (int i = 0; i < 3; i++) { char* s = strrchr(s_vfs_root, '/'); if (s) *s = 0; }
+    for (int i = 0; i < 3; i++) {
+        char* s = strrchr(s_vfs_root, '/');
+        if (s) *s = 0;
+        else { s_vfs_root[0] = 0; break; }
+    }
     if (!s_vfs_root[0]) strcpy(s_vfs_root, ".");
     ppu_vfs_root = s_vfs_root;
 }
@@ -205,6 +209,13 @@ extern "C" int      rsx_live_draw_debug_dump_surface(uint32_t location, uint32_t
                                                     const char* path);
 extern "C" void     rsx_live_draw_a010_probe_begin(void);
 
+static int tm_env_bool(const char* name, int def)
+{
+    const char* e = getenv(name);
+    if (!e || !*e) return def;
+    return atoi(e) != 0 ? 1 : 0;
+}
+
 /* Resolve (location, offset) to host memory for the engine. location 0 is RSX
  * local VRAM, 1 is main/IO memory; the engine promises its callers the whole
  * min_bytes span is readable, so validate the interval, not just its start. */
@@ -234,7 +245,7 @@ static const uint8_t* tm_live_guest_ptr(void* user, uint32_t location,
      * resolve fails, so a failing callback and a missing texture look identical
      * from the picture. Count both sides. */
     { static int dbg = -1;
-      if (dbg < 0) dbg = getenv("TM_LIVE_PTR_DBG") ? 1 : 0;
+      if (dbg < 0) dbg = tm_env_bool("TM_LIVE_PTR_DBG", 0);
       if (dbg) {
           static long long okc[2] = {0,0}, failc[2] = {0,0}, n = 0;
           const int li = (location == 0) ? 0 : 1;
@@ -297,85 +308,68 @@ static DWORD WINAPI vblank_ticker(LPVOID)
      * window DXGI Present throttles hard, which previously stalled these ticks and
      * paced the game's main loop to ~0.5fps. Drive the ticks off REAL elapsed time
      * and catch up in a bounded burst so present latency never slows the game. */
-    ULONGLONG next_tick = GetTickCount64();
+    /* Enable 1ms Windows timer precision so Sleep(1) and vblank pacing do not
+     * quantize to ~15.6ms ticks and cap frame rate to 30fps or below. */
+    if (HMODULE wm = LoadLibraryA("winmm.dll")) {
+        typedef UINT (WINAPI* timeBeginPeriod_fn)(UINT);
+        if (auto fn = (timeBeginPeriod_fn)GetProcAddress(wm, "timeBeginPeriod")) fn(1);
+    }
+    LARGE_INTEGER qpc_freq = {}, next_tick_qpc = {};
+    QueryPerformanceFrequency(&qpc_freq);
+    QueryPerformanceCounter(&next_tick_qpc);
+    const LONGLONG tick_interval_qpc = qpc_freq.QuadPart / 60;
+    const int auto_dump = tm_env_bool("TM_AUTO_DUMP", 0);
+    const int pacetrace = tm_env_bool("TM_PACETRACE", 0);
+
     for (;;) {
-        Sleep(1);
-        /* Drain the GCM FIFO as fast as we wake (~1ms), decoupled from the 60Hz
-         * present/flip tick. The game's _jsGcmFifoFinish reference-wait spins on
-         * control->ref expecting the RSX to advance it promptly; draining only at
-         * 60Hz lets that wait time out (JSGcmFifo.cpp:142 ref-mismatch assert), so
-         * keep control->get/ref tracking control->put with ~1ms latency. */
         if (rsx_ok) cellGcm_rsx_process_fifo();
         tm_fbdump_tick();   /* TM_FBDUMP=<secs>: snapshot the guest framebuffer */
         tm_ef_kick_tick();  /* TM_EF_KICK=<secs>: probe the stalled SPURS wait */
         tm_loaddone_tick(); /* TM_LOADDONE=<secs>: probe the load-complete byte */
         tm_fifowatch_tick();/* TM_FIFOWATCH=1: watch the RSX put/get/ref */
         tm_memdump_tick();  /* TM_MEMDUMP=<addr>[,n]: watch guest bytes */
-        ULONGLONG now = GetTickCount64();
+        LARGE_INTEGER now_qpc;
+        QueryPerformanceCounter(&now_qpc);
         int fired = 0;
-        while ((long long)(now - next_tick) >= 0 && fired < 240) {
+        while (now_qpc.QuadPart >= next_tick_qpc.QuadPart && fired < 240) {
             cellGcm_request_tick();   /* no guest code here -- delivered on main thread */
             if (rsx_ok) cellGcm_rsx_process_fifo();
-            next_tick += 16;                 /* ~60 Hz */
+            next_tick_qpc.QuadPart += tick_interval_qpc; /* 60 Hz */
             fired++;
         }
-        if (fired >= 240) next_tick = now;   /* fell too far behind -> resync */
+        if (fired >= 240) next_tick_qpc.QuadPart = now_qpc.QuadPart; /* fell too far behind -> resync */
+        int did_present = 0;
         if (rsx_ok) {
             /* The live engine presents through its own swap chain on the null
              * backend's window, so pump that window's messages instead. */
             if ((live ? rsx_null_backend_pump_messages()
                       : rsx_d3d12_backend_pump_messages()) != 0) { rsx_ok = 0; }
-            if (getenv("TM_PACETRACE")) {
-                static ULONGLONG s_win=0; static int s_pf=0, s_pres=0; static ULONGLONG s_presms=0;
-                s_pf += fired; s_pres++;
-                ULONGLONG t0=GetTickCount64(); if (!live) rsx_d3d12_backend_present(); ULONGLONG t1=GetTickCount64();
-                s_presms += (t1-t0);
-                if (s_win==0) s_win=now;
-                if (now - s_win >= 1000) {
-                    fprintf(stderr,"[PACE] process_fifo=%d/s  present=%d/s  present_total=%llums/s (avg %llums)\n",
-                            s_pf, s_pres, s_presms, s_pres? s_presms/s_pres:0);
-                    s_pf=0; s_pres=0; s_presms=0; s_win=now;
-                }
-            } else {
+            {
                 /* The live engine self-presents on the guest's flip method, so
                  * there is nothing to drive from here when it owns the window. */
-                if (!live) rsx_d3d12_backend_present();
-                else {
-                    /* Present on the GUEST's flip, not on our tick. Upstream
-                     * self-presents on flip method 0xE944 (established from
-                     * Yakuza); this title flips elsewhere, and presenting every
-                     * 60Hz tick showed whatever the surface happened to hold --
-                     * usually a freshly cleared one, which is why every dump came
-                     * back as a flat clear colour while 73k groups were drawing.
-                     * take_flip_pending_synced() is true only once the drain has
-                     * consumed everything up to put, i.e. the FIFO holds exactly
-                     * one completed frame. */
+                if (!live) {
+                    const ULONGLONG tp0 = pacetrace ? GetTickCount64() : 0;
+                    rsx_d3d12_backend_present();
+                    did_present = 1;
+                    if (pacetrace) {
+                        const ULONGLONG tp1 = GetTickCount64();
+                        static ULONGLONG s_win = 0, s_presms = 0; static int s_pf = 0, s_pres = 0;
+                        s_pf += fired; s_pres++; s_presms += (tp1 - tp0);
+                        if (!s_win) s_win = tp1;
+                        if (tp1 - s_win >= 1000) {
+                            fprintf(stderr, "[PACE] ticks=%d/s present=%d/s present_ms=%llums\n", s_pf, s_pres, s_presms);
+                            s_pf = 0; s_pres = 0; s_presms = 0; s_win = tp1;
+                        }
+                    }
+                } else {
                     const int flipped = cellGcm_take_flip_pending();
-                    /* Dump BEFORE presenting. At this point the FIFO has been
-                     * drained to put, so the frame's draws are complete and the
-                     * next frame has not cleared anything yet -- every earlier
-                     * sample was taken after the present and read a surface the
-                     * guest had already begun reusing. */
                     if (flipped) {
                       static int armed = -1; static uint32_t secs = 0;
                       static int done = 0; static ULONGLONG t0 = 0;
                       if (armed < 0) { const char* e = getenv("TM_LIVE_DUMP");
-                          armed = e ? 1 : 0;
-                          secs = e ? (uint32_t)strtoul(e, nullptr, 0) : 0; }
-                      /* Count flips rather than seconds: the guest stalls at an
-                       * unpredictable point and a wall-clock deadline kept
-                       * landing after flips had already stopped. TM_LIVE_DUMP is
-                       * now "dump on the Nth presented frame that carried
-                       * geometry". */
-                      /* TM_LIVE_DUMP=<n>: dump the first presented frame that
-                       * carried at least n draws. Wall-clock deadlines kept
-                       * landing after the guest had stopped flipping, and a flip
-                       * count caught frames with a single draw in them. */
+                          armed = tm_env_bool("TM_LIVE_DUMP", 0);
+                          secs = armed && e ? (uint32_t)strtoul(e, nullptr, 0) : 0; }
                       (void)t0;
-                      /* Sample several qualifying frames, not one: which frame a
-                       * single dump lands on is arbitrary, and a frame whose
-                       * geometry happens to be offscreen looks the same as a
-                       * broken renderer. */
                       static int shot = 0;
                       static uint32_t skip = 0;
                       static int dumped_high = 0;
@@ -408,12 +402,27 @@ static DWORD WINAPI vblank_ticker(LPVOID)
                           }
                           fflush(stderr);
                       } }
-                    if (flipped) rsx_live_draw_present(cellGcmGetCurrentDisplayBufferId());
+                    if (flipped) {
+                        const ULONGLONG tp0 = pacetrace ? GetTickCount64() : 0;
+                        rsx_live_draw_present(cellGcmGetCurrentDisplayBufferId());
+                        did_present = 1;
+                        if (pacetrace) {
+                            const ULONGLONG tp1 = GetTickCount64();
+                            static ULONGLONG s_win = 0, s_presms = 0; static int s_pf = 0, s_pres = 0;
+                            s_pf += fired; s_pres++; s_presms += (tp1 - tp0);
+                            if (!s_win) s_win = tp1;
+                            if (tp1 - s_win >= 1000) {
+                                fprintf(stderr, "[PACE] ticks=%d/s present=%d/s present_ms=%llums (avg %llums)\n",
+                                        s_pf, s_pres, s_presms, s_pres ? s_presms / s_pres : 0);
+                                s_pf = 0; s_pres = 0; s_presms = 0; s_win = tp1;
+                            }
+                        }
+                    }
                     static int arena_shots = 0;
                     const uint32_t surfs = rsx_live_draw_get_surface_count();
                     static uint32_t last_shot_frame = 0;
                     const uint32_t cur_f = rsx_live_draw_get_frames();
-                    if (arena_shots < 8 && surfs >= 4 && (cur_f >= last_shot_frame + 15 || last_shot_frame == 0)) {
+                    if (auto_dump && arena_shots < 8 && surfs >= 4 && (cur_f >= last_shot_frame + 15 || last_shot_frame == 0)) {
                         last_shot_frame = cur_f;
                         arena_shots++;
                         struct { uint32_t loc; uint32_t off; } targets[] = {
@@ -433,7 +442,7 @@ static DWORD WINAPI vblank_ticker(LPVOID)
                     }
                     static uint32_t last_menu_shot_frame = 0;
                     static int menu_shot_idx = 0;
-                    if (surfs >= 4 && cur_f >= 150 && (cur_f >= last_menu_shot_frame + 150)) {
+                    if (auto_dump && surfs >= 4 && cur_f >= 150 && (cur_f >= last_menu_shot_frame + 150)) {
                         last_menu_shot_frame = cur_f;
                         menu_shot_idx++;
                         struct { uint32_t loc; uint32_t off; } menu_targets[] = {
@@ -473,6 +482,11 @@ static DWORD WINAPI vblank_ticker(LPVOID)
                     }
                 }
             }
+        }
+        if (!rsx_ok) {
+            Sleep(10);
+        } else if (!did_present) {
+            Sleep(1);
         }
     }
     return 0;
@@ -584,7 +598,7 @@ static DWORD WINAPI hang_watchdog(LPVOID)
      * a wedge later in the boot (the cviewer scene load) was never captured.
      * TM_WATCHDOG_SECS=0 disables; default is a sample every 20s. */
     const char* e = getenv("TM_WATCHDOG_SECS");
-    int period = e ? atoi(e) : 20;
+    int period = (e && *e) ? atoi(e) : 0;
     if (period <= 0) return 0;
     for (int n = 1; ; n++) {
         Sleep((DWORD)period * 1000);
@@ -634,15 +648,17 @@ int main(int argc, char** argv)
     if (!getenv("RSX_LIVE_DRAW"))      _putenv("RSX_LIVE_DRAW=1");
     if (!getenv("TM_TRACE"))           _putenv("TM_TRACE=0");
     if (!getenv("GCM_SUBCH1_3D"))      _putenv("GCM_SUBCH1_3D=1");
-    if (!getenv("TM_GAMELOG"))         _putenv("TM_GAMELOG=1");
+    if (!getenv("TM_GAMELOG"))         _putenv("TM_GAMELOG=0");
+    if (!getenv("TM_HEAP_MB"))         _putenv("TM_HEAP_MB=64");
+    if (!getenv("TM_POOL_NOWAIT"))     _putenv("TM_POOL_NOWAIT=1");
     if (!getenv("PAD_AUTOPRESS"))      _putenv("PAD_AUTOPRESS=0");
-    if (!getenv("PAD_FORCE_FOCUS"))    _putenv("PAD_FORCE_FOCUS=1");
+    if (!getenv("PAD_FORCE_FOCUS"))    _putenv("PAD_FORCE_FOCUS=0");
     if (!getenv("TM_SKIP_BANKUNLOAD")) _putenv("TM_SKIP_BANKUNLOAD=1");
     if (!getenv("TM_BRB_SILENT"))      _putenv("TM_BRB_SILENT=1");
     if (!getenv("TM_BRB_PARK"))        _putenv("TM_BRB_PARK=1");
     if (!getenv("TM_BRB_ACK"))         _putenv("TM_BRB_ACK=1");
     if (!getenv("TM_JQ_WORKERS"))      _putenv("TM_JQ_WORKERS=4");
-    if (!getenv("TM_LOADDONE"))        _putenv("TM_LOADDONE=5");
+    if (!getenv("TM_LOADDONE"))        _putenv("TM_LOADDONE=0");
     if (!getenv("TM_VIDEO_MODES"))     _putenv("TM_VIDEO_MODES=2,1");
     /* TM_FORCEWORLD disabled: let the Front-End state machine progress naturally */
     if (!getenv("TM_RSX_W"))           _putenv("TM_RSX_W=1280");
