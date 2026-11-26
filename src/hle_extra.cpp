@@ -1351,7 +1351,30 @@ void func_005BB358(ppu_context* ctx)
         fprintf(stderr, "[ui] UiState::update #%d machine=0x%08X cur_vt=0x%08X\n", n, (uint32_t)ctx->gpr[3], s_current_ui_vtable);
         fflush(stderr);
     }
+    /* TM_ATTRACT_DIAG=1: snapshot the menu state's flags around the original update
+     * and log the exact update call during which one of them changes, with the
+     * elapsed seconds, so the cause can be matched against TM_TRACE=1 lines. */
+    static int ad = -1; if (ad < 0) ad = tm_env_bool("TM_ATTRACT_DIAG", 0);
+    const uint32_t cst = g_ui_cur_state;
+    const bool watch = ad && s_current_ui_vtable == 0x00CEF690u && tm_addr_ok(cst);
+    uint8_t b7d = 0, b7f = 0, st30 = 0; uint32_t w58 = 0, p88 = 0;
+    auto snap = [&](uint8_t& a, uint8_t& b, uint8_t& c, uint32_t& d) {
+        a = vm_read8(cst + 0x7D); b = vm_read8(cst + 0x7F); d = vm_read32(cst + 0x58);
+        p88 = vm_read32(cst + 0x88); c = tm_addr_ok(p88) ? vm_read8(p88 + 0x30) : 0xEE;
+    };
+    if (watch) snap(b7d, b7f, st30, w58);
     func_005BB358_lifted(ctx);
+    if (watch) {
+        uint8_t a7d, a7f, a30; uint32_t a58; snap(a7d, a7f, a30, a58);
+        static int logged = 0; static auto t0 = std::chrono::steady_clock::now();
+        if ((a7d != b7d || a7f != b7f || a30 != st30 || a58 != w58) && logged < 40) {
+            logged++;
+            fprintf(stderr, "[attract-flip] t=%.2fs update#%d +0x7D %u->%u +0x7F %u->%u status %u->%u +0x58 0x%08X->0x%08X lr=0x%08X"
+                    "%s", std::chrono::duration<double>(std::chrono::steady_clock::now() - t0).count(), n,
+                    b7d, a7d, b7f, a7f, st30, a30, w58, a58, (uint32_t)ctx->lr, "\n");
+            fflush(stderr);
+        }
+    }
 }
 void func_005CAEA0(ppu_context* ctx)
 {
