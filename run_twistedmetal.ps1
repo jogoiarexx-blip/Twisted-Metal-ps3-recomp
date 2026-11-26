@@ -37,7 +37,7 @@ $env:TM_BRB_ACK = "1"
 $env:TM_JQ_WORKERS = "4"
 # TM_LOADDONE intentionally not set: the 5 s load-complete probe makes ~1/3 of boots diverge (stuck on the startup loading screen).
 $env:TM_VIDEO_MODES = "2,1"
-$env:TM_FORCEWORLD = "15,direct"
+# TM_FORCEWORLD intentionally not set: the launcher starts the original flow (legal screens, intro, main menu). Set it manually to jump into a world.
 $env:TM_RSX_W = "1280"
 $env:TM_RSX_H = "720"
 

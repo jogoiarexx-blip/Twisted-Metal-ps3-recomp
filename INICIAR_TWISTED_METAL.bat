@@ -22,7 +22,7 @@ set TM_BRB_ACK=1
 set TM_JQ_WORKERS=4
 rem TM_LOADDONE intentionally not set: the 5 s load-complete probe makes ~1/3 of boots diverge.
 set TM_VIDEO_MODES=2,1
-set TM_FORCEWORLD=15,direct
+rem TM_FORCEWORLD intentionally not set: starts the original flow (legal screens, intro, main menu).
 set TM_RSX_W=1280
 set TM_RSX_H=720
 
