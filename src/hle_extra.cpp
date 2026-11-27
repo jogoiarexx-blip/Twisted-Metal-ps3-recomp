@@ -16,6 +16,11 @@
  * being faked next to it.
  */
 #include "ppu_recomp.h"
+#if defined(__has_include)
+#  if __has_include("tm_local.h")
+#    include "tm_local.h"   /* local, untracked: e.g. #define TM_FRAME_COUNTERS 1 */
+#  endif
+#endif
 
 #include <stdint.h>
 #include <stdio.h>
@@ -1510,6 +1515,7 @@ void func_0034F060_lifted(ppu_context* ctx);
  * bytes to see whether the table is unpopulated or the lookup misses. */
 void func_0034F060(ppu_context* ctx)
 {
+    tm_thread_hit("f_0034F060");
     const uint32_t tbl = (uint32_t)ctx->gpr[3], id = (uint32_t)ctx->gpr[4];
     func_0034F060_lifted(ctx);
     if (tm_trace_on()) {
@@ -1854,7 +1860,7 @@ void func_004DDCE0(ppu_context* ctx) { tm_trace("cin::004DDCE0", func_004DDCE0_l
 void func_004DDD04_lifted(ppu_context* ctx);
 void func_004DDD04(ppu_context* ctx) { tm_trace("cin::004DDD04", func_004DDD04_lifted, ctx); }
 void func_004DDFD0_lifted(ppu_context* ctx);
-void func_004DDFD0(ppu_context* ctx) { tm_trace("cin::004DDFD0", func_004DDFD0_lifted, ctx); }
+void func_004DDFD0(ppu_context* ctx) { tm_thread_hit("f_004DDFD0"); tm_trace("cin::004DDFD0", func_004DDFD0_lifted, ctx); }
 void func_00667DF8_lifted(ppu_context* ctx);
 void func_00667DF8(ppu_context* ctx) { tm_trace("cin::00667DF8", func_00667DF8_lifted, ctx); }
 void func_00669F8C_lifted(ppu_context* ctx);
@@ -1894,7 +1900,7 @@ void func_00692924(ppu_context* ctx) { tm_trace("avi::00692924", func_00692924_l
 void func_00693600_lifted(ppu_context* ctx);
 void func_00693600(ppu_context* ctx) { tm_trace("avi::00693600", func_00693600_lifted, ctx); }
 void func_00693AD0_lifted(ppu_context* ctx);
-void func_00693AD0(ppu_context* ctx) { tm_trace("avi::00693AD0", func_00693AD0_lifted, ctx); }
+void func_00693AD0(ppu_context* ctx) { tm_thread_hit("f_00693AD0"); tm_trace("avi::00693AD0", func_00693AD0_lifted, ctx); }
 void func_00081D88_lifted(ppu_context* ctx);
 void func_00081D88(ppu_context* ctx) { tm_trace("avi::00081D88", func_00081D88_lifted, ctx); }
 void func_001DB6B8_lifted(ppu_context* ctx);
@@ -3302,3 +3308,47 @@ static void tm_sceNp2Init(ppu_context* ctx)
 {
     ctx->gpr[3] = 0; /* CELL_OK */
 }
+
+#if defined(TM_FRAME_COUNTERS)   /* opt-in: needs tools/patch_frame_counters.py applied to the recomp chunks */
+/* TM_THREADMAP=1 call counters for the direct callees of the RTApp frame step
+ * (func_0010EF58). The generated definitions were renamed to *_lifted in the
+ * git-ignored recomp chunks (see tools/ note); these wrappers count and forward. */
+void func_0010EF58_lifted(ppu_context* ctx);
+void func_0010EF58(ppu_context* ctx) { tm_thread_hit("f_0010EF58"); func_0010EF58_lifted(ctx); }
+void func_0015F3B8_lifted(ppu_context* ctx);
+void func_0015F3B8(ppu_context* ctx) { tm_thread_hit("f_0015F3B8"); func_0015F3B8_lifted(ctx); }
+void func_0010ED40_lifted(ppu_context* ctx);
+void func_0010ED40(ppu_context* ctx) { tm_thread_hit("f_0010ED40"); func_0010ED40_lifted(ctx); }
+void func_003C31D0_lifted(ppu_context* ctx);
+void func_003C31D0(ppu_context* ctx) { tm_thread_hit("f_003C31D0"); func_003C31D0_lifted(ctx); }
+void func_003621DC_lifted(ppu_context* ctx);
+void func_003621DC(ppu_context* ctx) { tm_thread_hit("f_003621DC"); func_003621DC_lifted(ctx); }
+void func_0036181C_lifted(ppu_context* ctx);
+void func_0036181C(ppu_context* ctx) { tm_thread_hit("f_0036181C"); func_0036181C_lifted(ctx); }
+void func_002A0AF8_lifted(ppu_context* ctx);
+void func_002A0AF8(ppu_context* ctx) { tm_thread_hit("f_002A0AF8"); func_002A0AF8_lifted(ctx); }
+void func_0024D3FC_lifted(ppu_context* ctx);
+void func_0024D3FC(ppu_context* ctx) { tm_thread_hit("f_0024D3FC"); func_0024D3FC_lifted(ctx); }
+void func_005AF200_lifted(ppu_context* ctx);
+void func_005AF200(ppu_context* ctx) { tm_thread_hit("f_005AF200"); func_005AF200_lifted(ctx); }
+void func_005ABA58_lifted(ppu_context* ctx);
+void func_005ABA58(ppu_context* ctx) { tm_thread_hit("f_005ABA58"); func_005ABA58_lifted(ctx); }
+void func_00610028_lifted(ppu_context* ctx);
+void func_00610028(ppu_context* ctx) { tm_thread_hit("f_00610028"); func_00610028_lifted(ctx); }
+void func_005B0E0C_lifted(ppu_context* ctx);
+void func_005B0E0C(ppu_context* ctx) { tm_thread_hit("f_005B0E0C"); func_005B0E0C_lifted(ctx); }
+void func_005B0DD0_lifted(ppu_context* ctx);
+void func_005B0DD0(ppu_context* ctx) { tm_thread_hit("f_005B0DD0"); func_005B0DD0_lifted(ctx); }
+void func_005AF0D8_lifted(ppu_context* ctx);
+void func_005AF0D8(ppu_context* ctx) { tm_thread_hit("f_005AF0D8"); func_005AF0D8_lifted(ctx); }
+void func_005ABB70_lifted(ppu_context* ctx);
+void func_005ABB70(ppu_context* ctx) { tm_thread_hit("f_005ABB70"); func_005ABB70_lifted(ctx); }
+void func_005511A4_lifted(ppu_context* ctx);
+void func_005511A4(ppu_context* ctx) { tm_thread_hit("f_005511A4"); func_005511A4_lifted(ctx); }
+void func_00535120_lifted(ppu_context* ctx);
+void func_00535120(ppu_context* ctx) { tm_thread_hit("f_00535120"); func_00535120_lifted(ctx); }
+void func_004DE120_lifted(ppu_context* ctx);
+void func_004DE120(ppu_context* ctx) { tm_thread_hit("f_004DE120"); func_004DE120_lifted(ctx); }
+void func_00692918_lifted(ppu_context* ctx);
+void func_00692918(ppu_context* ctx) { tm_thread_hit("f_00692918"); func_00692918_lifted(ctx); }
+#endif /* TM_FRAME_COUNTERS */

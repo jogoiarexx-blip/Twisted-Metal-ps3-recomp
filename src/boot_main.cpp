@@ -257,6 +257,21 @@ static const uint8_t* tm_live_guest_ptr(void* user, uint32_t location,
                       okc[0], failc[0], okc[1], failc[1],
                       location, offset, min_bytes, ea), fflush(stderr);
       } }
+    /* TM_TEXPEEK=<loc>:<hex offset>: the first few times the engine resolves that
+     * exact (location, offset), print the first 48 bytes and how many bytes of the
+     * requested span are non-zero. Answers "is the texture content really there". */
+    { static int pk = -1; static uint32_t pl, po; static int shown = 0;
+      if (pk < 0) { const char* e = getenv("TM_TEXPEEK"); pk = 0;
+          if (e && *e) { char* q = nullptr; pl = (uint32_t)strtoul(e, &q, 10);
+              if (q && *q == ':') { po = (uint32_t)strtoul(q + 1, nullptr, 16); pk = 1; } } }
+      if (pk && ok && location == pl && offset == po && shown < 6) {
+          shown++;
+          const uint8_t* b = (const uint8_t*)vm_base + ea; uint32_t nz = 0;
+          for (uint32_t i = 0; i < min_bytes; i++) nz += b[i] != 0;
+          fprintf(stderr, "[texpeek] loc=%u off=0x%08X ea=0x%08X span=%u nonzero=%u first48:", location, offset, ea, min_bytes, nz);
+          for (int i = 0; i < 48; i++) fprintf(stderr, " %02X", b[i]);
+          fprintf(stderr, "%s", "\n"); fflush(stderr);
+      } }
     if (!ok) return nullptr;
     return (const uint8_t*)vm_base + ea;
 }
