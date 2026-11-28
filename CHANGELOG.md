@@ -4,6 +4,18 @@ Todas as alterações notáveis no projeto *Twisted Metal (2012) Static Recompil
 
 ---
 
+## [Unreleased] - 2026-11-28
+
+### Adicionado
+- **Relatório de Status First Playable (`FIRST_PLAYABLE_STATUS.md`):** Consolidada avaliação técnica de `TM-01` a `TM-09` com métricas de FPS, evidências de renderização e diagnóstico do bloqueio de geometria 3D (`func_00645708` / `[jq-cull]`).
+- **Patch consolidado do runtime (`patches/0002-ps3recomp-tm-bringup-and-fp-fix.patch`):** Exportado diff completo de `ps3recomp` com melhorias de `rsx_live_draw.c`, `rsx_fp_decompiler.c`, `rsx_vp_decompiler.c`, `rsx_commands.c`, `cellPad.c`, `cellSpurs.c` e `spu_workload.c`.
+
+### Corrigido
+- **Borramento vertical / Ghosting no Menu e Garagem:** Identificada a causa raiz no pass pós-FX `f81da28d` (`0x1870000:E5` lido sem depth-alias packing) e restaurado `lerp(...)` em `rsx_fp_decompiler.c`, recuperando nitidez total nas capturas de Menu e Story/Garage (`nonblack=244450`).
+- **Queda severa de FPS com logs redirecionados:** Identificado que `ps3_log_verbose()` ativava logs massivos em redirecionamento de `stderr`; com `PS3_VERBOSE=0` o fluxo Menu → Story/Garage opera entre `34.3` e `55.4 FPS`.
+
+---
+
 ## [Unreleased] - 2026-11-24
 
 ### Adicionado
